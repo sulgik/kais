@@ -38,6 +38,14 @@ def show_threat_image(threat_id: str):
             st.image(str(img_path), use_container_width=True)
 
 
+def threat_badge(tid: str) -> str:
+    return f'<span style="background:#ed1c24;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:0.85em;">{tid}</span>'
+
+
+def measure_badge(mid: str) -> str:
+    return f'<span style="background:#2f55a5;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:0.85em;">{mid}</span>'
+
+
 # --- Sidebar ---
 with st.sidebar:
     st.title("⚙️ 설정")
@@ -100,6 +108,7 @@ with tab_explorer:
         st.subheader("보안위협 (T01~T15)")
         for t in kg.threats:
             with st.expander(f"**{t['id']}** {t['name']}"):
+                st.markdown(f"{threat_badge(t['id'])} **{t['name']}**", unsafe_allow_html=True)
                 show_threat_image(t["id"])
                 st.markdown(f"**정의:** {t['definition']}")
                 st.markdown(f"**위협:** {t['risk']}")
@@ -111,7 +120,8 @@ with tab_explorer:
                     st.markdown(f"**수명주기:** {', '.join(t['lifecycles'])}")
                 related_measures = kg.get_measures_for_threat(t["id"])
                 if related_measures:
-                    st.markdown(f"**대응 대책:** {', '.join(m['id'] for m in related_measures)}")
+                    badges = " ".join(measure_badge(m["id"]) for m in related_measures)
+                    st.markdown(f"**대응 대책:** {badges}", unsafe_allow_html=True)
 
     with col2:
         st.subheader("보안대책 (M01~M30)")
@@ -124,6 +134,7 @@ with tab_explorer:
 
         for m in filtered_measures:
             with st.expander(f"**{m['id']}** {m['name']}"):
+                st.markdown(f"{measure_badge(m['id'])} **{m['name']}**", unsafe_allow_html=True)
                 st.markdown(m["description"])
                 if m.get("details"):
                     for d in m["details"]:
@@ -132,7 +143,8 @@ with tab_explorer:
                     st.info(f"📋 {m['checklist']}")
                 related_threats = kg.get_threats_for_measure(m["id"])
                 if related_threats:
-                    st.markdown(f"**대응 위협:** {', '.join(t['id'] for t in related_threats)}")
+                    badges = " ".join(threat_badge(t["id"]) for t in related_threats)
+                    st.markdown(f"**대응 위협:** {badges}", unsafe_allow_html=True)
 
 # --- Tab 2: Checklist Generator ---
 with tab_checklist:
