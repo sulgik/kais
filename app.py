@@ -57,6 +57,17 @@ st.title("🛡️ KAIS")
 st.markdown("**K-AI Security Advisor** — NIS AI보안 가이드북 기반 AI 보안 어드바이저")
 st.caption("국가·공공기관 AI시스템 도입·활용을 위한 보안 안내 시스템")
 
+st.warning(
+    """**⚠️ 실험적 서비스 안내 (Experimental)**
+
+- 본 서비스는 연구·교육 목적의 **비공식 실험 서비스**이며, 국가정보원(NIS)과 무관합니다.
+- AI 보안을 안내하는 서비스이지만, **본 서비스 자체도 보안 취약점을 가질 수 있습니다.** 민감한 기관 정보나 업무 데이터를 입력하지 마세요.
+- 입력한 질문은 Anthropic Claude API를 통해 처리됩니다. 본인의 API 키와 입력 내용에 대한 책임은 사용자에게 있습니다.
+- 답변은 NIS AI보안 가이드북(2025.12)을 기반으로 생성되며, 공식 보안 검토를 대체하지 않습니다.
+""",
+    icon="⚠️",
+)
+
 # --- Tabs ---
 tab_advisor, tab_explorer, tab_checklist = st.tabs(["💬 어드바이저", "🔍 지식 탐색", "✅ 체크리스트"])
 
