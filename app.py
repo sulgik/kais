@@ -2,6 +2,8 @@
 KAIS - K-AI Security Advisor
 Streamlit Web UI
 """
+import json
+from pathlib import Path
 import streamlit as st
 from knowledge_graph import SecurityKnowledgeGraph
 from advisor import advise, build_context
@@ -17,10 +19,26 @@ st.set_page_config(
 def load_kg():
     return SecurityKnowledgeGraph()
 
+@st.cache_data
+def load_image_index():
+    index_path = Path(__file__).parent / "data" / "images" / "index.json"
+    if index_path.exists():
+        return json.loads(index_path.read_text(encoding="utf-8"))
+    return {}
+
 kg = load_kg()
+image_index = load_image_index()
+IMAGE_DIR = Path(__file__).parent / "data" / "images"
 
 
-# --- Sidebar: API key + Context filters ---
+def show_threat_image(threat_id: str):
+    if threat_id in image_index:
+        img_path = IMAGE_DIR / image_index[threat_id]
+        if img_path.exists():
+            st.image(str(img_path), use_container_width=True)
+
+
+# --- Sidebar ---
 with st.sidebar:
     st.title("⚙️ 설정")
 
@@ -51,6 +69,9 @@ with st.sidebar:
     stats = kg.summary()
     st.caption(f"📊 지식 그래프: {stats['total_threats']}개 위협 · {stats['total_measures']}개 대책 · {stats['total_links']}개 연결")
 
+    st.divider()
+    st.caption("Made by [sulgik@gmail.com](mailto:sulgik@gmail.com)")
+
 
 # --- Main area ---
 st.title("🛡️ KAIS")
@@ -68,10 +89,100 @@ st.warning(
     icon="⚠️",
 )
 
-# --- Tabs ---
-tab_advisor, tab_explorer, tab_checklist = st.tabs(["💬 어드바이저", "🔍 지식 탐색", "✅ 체크리스트"])
+# --- Tabs: 지식탐색 + 체크리스트 앞, 어드바이저 뒤 ---
+tab_explorer, tab_checklist, tab_advisor = st.tabs(["🔍 지식 탐색", "✅ 체크리스트", "💬 어드바이저"])
 
-# --- Tab 1: Advisor (Chat) ---
+# --- Tab 1: Knowledge Explorer ---
+with tab_explorer:
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("보안위협 (T01~T15)")
+        for t in kg.threats:
+            with st.expander(f"**{t['id']}** {t['name']}"):
+                show_threat_image(t["id"])
+                st.markdown(f"**정의:** {t['definition']}")
+                st.markdown(f"**위협:** {t['risk']}")
+                if t.get("examples"):
+                    st.markdown("**사례:**")
+                    for ex in t["examples"]:
+                        st.markdown(f"- {ex}")
+                if t.get("lifecycles"):
+                    st.markdown(f"**수명주기:** {', '.join(t['lifecycles'])}")
+                related_measures = kg.get_measures_for_threat(t["id"])
+                if related_measures:
+                    st.markdown(f"**대응 대책:** {', '.join(m['id'] for m in related_measures)}")
+
+    with col2:
+        st.subheader("보안대책 (M01~M30)")
+        measure_filter = st.radio(
+            "필터", ["공통 (M)", "에이전틱 (A-M)", "피지컬 (P-M)"],
+            horizontal=True, key="measure_filter"
+        )
+        filter_map = {"공통 (M)": None, "에이전틱 (A-M)": "에이전틱 AI", "피지컬 (P-M)": "피지컬 AI"}
+        filtered_measures = kg.get_measures_by_ai_type(filter_map[measure_filter])
+
+        for m in filtered_measures:
+            with st.expander(f"**{m['id']}** {m['name']}"):
+                st.markdown(m["description"])
+                if m.get("details"):
+                    for d in m["details"]:
+                        st.markdown(f"- {d}")
+                if m.get("checklist"):
+                    st.info(f"📋 {m['checklist']}")
+                related_threats = kg.get_threats_for_measure(m["id"])
+                if related_threats:
+                    st.markdown(f"**대응 위협:** {', '.join(t['id'] for t in related_threats)}")
+
+# --- Tab 2: Checklist Generator ---
+with tab_checklist:
+    st.subheader("보안대책 체크리스트 생성기")
+    st.markdown("구축 유형과 AI 유형을 선택하면 맞춤형 체크리스트를 생성합니다.")
+
+    cl_col1, cl_col2 = st.columns(2)
+    with cl_col1:
+        cl_build = st.selectbox(
+            "구축 유형 선택",
+            options=["내부망 전용", "외부망 연계", "대민서비스", "상용 AI서비스"],
+            key="cl_build",
+        )
+    with cl_col2:
+        cl_ai = st.selectbox(
+            "AI 유형 선택",
+            options=["생성형 AI", "에이전틱 AI", "피지컬 AI"],
+            key="cl_ai",
+        )
+
+    # 구축유형 이미지
+    bt_key_map = {
+        "내부망 전용": "BT_내부망전용",
+        "외부망 연계": "BT_외부망연계",
+        "대민서비스": "BT_대민서비스",
+        "상용 AI서비스": "BT_상용서비스",
+    }
+    bt_img_key = bt_key_map.get(cl_build)
+    if bt_img_key and bt_img_key in image_index:
+        img_path = IMAGE_DIR / image_index[bt_img_key]
+        if img_path.exists():
+            st.image(str(img_path), caption=f"{cl_build} 구성 개념도", use_container_width=True)
+
+    if st.button("체크리스트 생성", type="primary"):
+        result = kg.query_by_context(build_type=cl_build, ai_type=cl_ai)
+
+        st.markdown(f"### 📋 {cl_build} + {cl_ai} 체크리스트")
+
+        st.markdown("#### 주요 위협")
+        for t in result["threats"]:
+            st.markdown(f"- **{t['id']}** {t['name']}: {t['risk']}")
+
+        st.markdown("#### 보안대책 체크리스트")
+        for m in result["measures"]:
+            if m.get("checklist"):
+                st.checkbox(f"**{m['id']}** {m['checklist']}", key=f"check_{m['id']}")
+            else:
+                st.checkbox(f"**{m['id']}** {m['name']}", key=f"check_{m['id']}")
+
+# --- Tab 3: Advisor (Chat) ---
 with tab_advisor:
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -106,81 +217,3 @@ with tab_advisor:
                     )
                     st.markdown(response)
             st.session_state.messages.append({"role": "assistant", "content": response})
-
-# --- Tab 2: Knowledge Explorer ---
-with tab_explorer:
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.subheader("보안위협 (T01~T15)")
-        for t in kg.threats:
-            with st.expander(f"**{t['id']}** {t['name']}"):
-                st.markdown(f"**정의:** {t['definition']}")
-                st.markdown(f"**위협:** {t['risk']}")
-                if t.get("examples"):
-                    st.markdown("**사례:**")
-                    for ex in t["examples"]:
-                        st.markdown(f"- {ex}")
-                if t.get("lifecycles"):
-                    st.markdown(f"**수명주기:** {', '.join(t['lifecycles'])}")
-
-                related_measures = kg.get_measures_for_threat(t["id"])
-                if related_measures:
-                    st.markdown(f"**대응 대책:** {', '.join(m['id'] for m in related_measures)}")
-
-    with col2:
-        st.subheader("보안대책 (M01~M30)")
-        measure_filter = st.radio(
-            "필터", ["공통 (M)", "에이전틱 (A-M)", "피지컬 (P-M)"],
-            horizontal=True, key="measure_filter"
-        )
-        filter_map = {"공통 (M)": None, "에이전틱 (A-M)": "에이전틱 AI", "피지컬 (P-M)": "피지컬 AI"}
-        filtered_measures = kg.get_measures_by_ai_type(filter_map[measure_filter])
-
-        for m in filtered_measures:
-            with st.expander(f"**{m['id']}** {m['name']}"):
-                st.markdown(m["description"])
-                if m.get("details"):
-                    for d in m["details"]:
-                        st.markdown(f"- {d}")
-                if m.get("checklist"):
-                    st.info(f"📋 {m['checklist']}")
-
-                related_threats = kg.get_threats_for_measure(m["id"])
-                if related_threats:
-                    st.markdown(f"**대응 위협:** {', '.join(t['id'] for t in related_threats)}")
-
-# --- Tab 3: Checklist Generator ---
-with tab_checklist:
-    st.subheader("보안대책 체크리스트 생성기")
-    st.markdown("구축 유형과 AI 유형을 선택하면 맞춤형 체크리스트를 생성합니다.")
-
-    cl_col1, cl_col2 = st.columns(2)
-    with cl_col1:
-        cl_build = st.selectbox(
-            "구축 유형 선택",
-            options=["내부망 전용", "외부망 연계", "대민서비스", "상용 AI서비스"],
-            key="cl_build",
-        )
-    with cl_col2:
-        cl_ai = st.selectbox(
-            "AI 유형 선택",
-            options=["생성형 AI", "에이전틱 AI", "피지컬 AI"],
-            key="cl_ai",
-        )
-
-    if st.button("체크리스트 생성", type="primary"):
-        result = kg.query_by_context(build_type=cl_build, ai_type=cl_ai)
-
-        st.markdown(f"### 📋 {cl_build} + {cl_ai} 체크리스트")
-
-        st.markdown("#### 주요 위협")
-        for t in result["threats"]:
-            st.markdown(f"- **{t['id']}** {t['name']}: {t['risk']}")
-
-        st.markdown("#### 보안대책 체크리스트")
-        for i, m in enumerate(result["measures"], 1):
-            if m.get("checklist"):
-                st.checkbox(f"**{m['id']}** {m['checklist']}", key=f"check_{m['id']}")
-            else:
-                st.checkbox(f"**{m['id']}** {m['name']}", key=f"check_{m['id']}")
