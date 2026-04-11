@@ -1,0 +1,175 @@
+"""
+KAIS - K-AI Security Advisor
+Streamlit Web UI
+"""
+import streamlit as st
+from knowledge_graph import SecurityKnowledgeGraph
+from advisor import advise, build_context
+
+st.set_page_config(
+    page_title="KAIS - K-AI Security Advisor",
+    page_icon="🛡️",
+    layout="wide",
+)
+
+# --- Init ---
+@st.cache_resource
+def load_kg():
+    return SecurityKnowledgeGraph()
+
+kg = load_kg()
+
+
+# --- Sidebar: API key + Context filters ---
+with st.sidebar:
+    st.title("⚙️ 설정")
+
+    api_key = st.text_input("Anthropic API Key", type="password", help="Claude API 키를 입력하세요")
+
+    st.divider()
+    st.subheader("🎯 컨텍스트 필터")
+
+    build_type = st.selectbox(
+        "구축 유형",
+        options=["전체", "내부망 전용", "외부망 연계", "대민서비스", "상용 AI서비스"],
+        index=0,
+    )
+
+    ai_type = st.selectbox(
+        "AI 유형",
+        options=["전체", "생성형 AI", "에이전틱 AI", "피지컬 AI"],
+        index=0,
+    )
+
+    lifecycle = st.selectbox(
+        "수명주기 단계",
+        options=["전체", "데이터 수집", "AI 학습", "AI시스템 구축", "AI시스템 운영", "AI시스템 폐기"],
+        index=0,
+    )
+
+    st.divider()
+    stats = kg.summary()
+    st.caption(f"📊 지식 그래프: {stats['total_threats']}개 위협 · {stats['total_measures']}개 대책 · {stats['total_links']}개 연결")
+
+
+# --- Main area ---
+st.title("🛡️ KAIS")
+st.markdown("**K-AI Security Advisor** — NIS AI보안 가이드북 기반 AI 보안 어드바이저")
+st.caption("국가·공공기관 AI시스템 도입·활용을 위한 보안 안내 시스템")
+
+# --- Tabs ---
+tab_advisor, tab_explorer, tab_checklist = st.tabs(["💬 어드바이저", "🔍 지식 탐색", "✅ 체크리스트"])
+
+# --- Tab 1: Advisor (Chat) ---
+with tab_advisor:
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+    if prompt := st.chat_input("AI 보안에 대해 질문하세요 (예: 에이전틱 AI 도입 시 주의사항은?)"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        if not api_key:
+            with st.chat_message("assistant"):
+                st.warning("사이드바에서 Anthropic API Key를 입력해주세요.")
+            st.session_state.messages.append({"role": "assistant", "content": "⚠️ API Key가 필요합니다."})
+        else:
+            with st.chat_message("assistant"):
+                with st.spinner("NIS 가이드북을 기반으로 답변 생성 중..."):
+                    bt = None if build_type == "전체" else build_type
+                    at = None if ai_type == "전체" else ai_type
+                    lc = None if lifecycle == "전체" else lifecycle
+
+                    response = advise(
+                        user_query=prompt,
+                        kg=kg,
+                        build_type=bt,
+                        ai_type=at,
+                        lifecycle=lc,
+                        api_key=api_key,
+                    )
+                    st.markdown(response)
+            st.session_state.messages.append({"role": "assistant", "content": response})
+
+# --- Tab 2: Knowledge Explorer ---
+with tab_explorer:
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("보안위협 (T01~T15)")
+        for t in kg.threats:
+            with st.expander(f"**{t['id']}** {t['name']}"):
+                st.markdown(f"**정의:** {t['definition']}")
+                st.markdown(f"**위협:** {t['risk']}")
+                if t.get("examples"):
+                    st.markdown("**사례:**")
+                    for ex in t["examples"]:
+                        st.markdown(f"- {ex}")
+                if t.get("lifecycles"):
+                    st.markdown(f"**수명주기:** {', '.join(t['lifecycles'])}")
+
+                related_measures = kg.get_measures_for_threat(t["id"])
+                if related_measures:
+                    st.markdown(f"**대응 대책:** {', '.join(m['id'] for m in related_measures)}")
+
+    with col2:
+        st.subheader("보안대책 (M01~M30)")
+        measure_filter = st.radio(
+            "필터", ["공통 (M)", "에이전틱 (A-M)", "피지컬 (P-M)"],
+            horizontal=True, key="measure_filter"
+        )
+        filter_map = {"공통 (M)": None, "에이전틱 (A-M)": "에이전틱 AI", "피지컬 (P-M)": "피지컬 AI"}
+        filtered_measures = kg.get_measures_by_ai_type(filter_map[measure_filter])
+
+        for m in filtered_measures:
+            with st.expander(f"**{m['id']}** {m['name']}"):
+                st.markdown(m["description"])
+                if m.get("details"):
+                    for d in m["details"]:
+                        st.markdown(f"- {d}")
+                if m.get("checklist"):
+                    st.info(f"📋 {m['checklist']}")
+
+                related_threats = kg.get_threats_for_measure(m["id"])
+                if related_threats:
+                    st.markdown(f"**대응 위협:** {', '.join(t['id'] for t in related_threats)}")
+
+# --- Tab 3: Checklist Generator ---
+with tab_checklist:
+    st.subheader("보안대책 체크리스트 생성기")
+    st.markdown("구축 유형과 AI 유형을 선택하면 맞춤형 체크리스트를 생성합니다.")
+
+    cl_col1, cl_col2 = st.columns(2)
+    with cl_col1:
+        cl_build = st.selectbox(
+            "구축 유형 선택",
+            options=["내부망 전용", "외부망 연계", "대민서비스", "상용 AI서비스"],
+            key="cl_build",
+        )
+    with cl_col2:
+        cl_ai = st.selectbox(
+            "AI 유형 선택",
+            options=["생성형 AI", "에이전틱 AI", "피지컬 AI"],
+            key="cl_ai",
+        )
+
+    if st.button("체크리스트 생성", type="primary"):
+        result = kg.query_by_context(build_type=cl_build, ai_type=cl_ai)
+
+        st.markdown(f"### 📋 {cl_build} + {cl_ai} 체크리스트")
+
+        st.markdown("#### 주요 위협")
+        for t in result["threats"]:
+            st.markdown(f"- **{t['id']}** {t['name']}: {t['risk']}")
+
+        st.markdown("#### 보안대책 체크리스트")
+        for i, m in enumerate(result["measures"], 1):
+            if m.get("checklist"):
+                st.checkbox(f"**{m['id']}** {m['checklist']}", key=f"check_{m['id']}")
+            else:
+                st.checkbox(f"**{m['id']}** {m['name']}", key=f"check_{m['id']}")

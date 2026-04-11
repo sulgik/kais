@@ -1,0 +1,358 @@
+[
+  {
+    "threat_id": "T01",
+    "measure_id": "M01"
+  },
+  {
+    "threat_id": "T03",
+    "measure_id": "M01"
+  },
+  {
+    "threat_id": "T14",
+    "measure_id": "M01"
+  },
+  {
+    "threat_id": "T03",
+    "measure_id": "M02"
+  },
+  {
+    "threat_id": "T14",
+    "measure_id": "M02"
+  },
+  {
+    "threat_id": "T01",
+    "measure_id": "M03"
+  },
+  {
+    "threat_id": "T02",
+    "measure_id": "M03"
+  },
+  {
+    "threat_id": "T03",
+    "measure_id": "M03"
+  },
+  {
+    "threat_id": "T14",
+    "measure_id": "M03"
+  },
+  {
+    "threat_id": "T01",
+    "measure_id": "M04"
+  },
+  {
+    "threat_id": "T01",
+    "measure_id": "M05"
+  },
+  {
+    "threat_id": "T04",
+    "measure_id": "M05"
+  },
+  {
+    "threat_id": "T05",
+    "measure_id": "M05"
+  },
+  {
+    "threat_id": "T02",
+    "measure_id": "M06"
+  },
+  {
+    "threat_id": "T07",
+    "measure_id": "M06"
+  },
+  {
+    "threat_id": "T02",
+    "measure_id": "M07"
+  },
+  {
+    "threat_id": "T05",
+    "measure_id": "M07"
+  },
+  {
+    "threat_id": "T07",
+    "measure_id": "M07"
+  },
+  {
+    "threat_id": "T01",
+    "measure_id": "M08"
+  },
+  {
+    "threat_id": "T04",
+    "measure_id": "M08"
+  },
+  {
+    "threat_id": "T05",
+    "measure_id": "M08"
+  },
+  {
+    "threat_id": "T12",
+    "measure_id": "M08"
+  },
+  {
+    "threat_id": "T03",
+    "measure_id": "M09"
+  },
+  {
+    "threat_id": "T04",
+    "measure_id": "M09"
+  },
+  {
+    "threat_id": "T05",
+    "measure_id": "M09"
+  },
+  {
+    "threat_id": "T07",
+    "measure_id": "M09"
+  },
+  {
+    "threat_id": "T08",
+    "measure_id": "M09"
+  },
+  {
+    "threat_id": "T11",
+    "measure_id": "M09"
+  },
+  {
+    "threat_id": "T12",
+    "measure_id": "M09"
+  },
+  {
+    "threat_id": "T13",
+    "measure_id": "M09"
+  },
+  {
+    "threat_id": "T01",
+    "measure_id": "M10"
+  },
+  {
+    "threat_id": "T03",
+    "measure_id": "M10"
+  },
+  {
+    "threat_id": "T05",
+    "measure_id": "M10"
+  },
+  {
+    "threat_id": "T14",
+    "measure_id": "M10"
+  },
+  {
+    "threat_id": "T03",
+    "measure_id": "M11"
+  },
+  {
+    "threat_id": "T13",
+    "measure_id": "M11"
+  },
+  {
+    "threat_id": "T14",
+    "measure_id": "M11"
+  },
+  {
+    "threat_id": "T03",
+    "measure_id": "M12"
+  },
+  {
+    "threat_id": "T14",
+    "measure_id": "M12"
+  },
+  {
+    "threat_id": "T04",
+    "measure_id": "M13"
+  },
+  {
+    "threat_id": "T07",
+    "measure_id": "M13"
+  },
+  {
+    "threat_id": "T08",
+    "measure_id": "M13"
+  },
+  {
+    "threat_id": "T09",
+    "measure_id": "M13"
+  },
+  {
+    "threat_id": "T04",
+    "measure_id": "M14"
+  },
+  {
+    "threat_id": "T07",
+    "measure_id": "M14"
+  },
+  {
+    "threat_id": "T08",
+    "measure_id": "M14"
+  },
+  {
+    "threat_id": "T09",
+    "measure_id": "M14"
+  },
+  {
+    "threat_id": "T11",
+    "measure_id": "M14"
+  },
+  {
+    "threat_id": "T04",
+    "measure_id": "M15"
+  },
+  {
+    "threat_id": "T07",
+    "measure_id": "M15"
+  },
+  {
+    "threat_id": "T08",
+    "measure_id": "M15"
+  },
+  {
+    "threat_id": "T09",
+    "measure_id": "M15"
+  },
+  {
+    "threat_id": "T11",
+    "measure_id": "M15"
+  },
+  {
+    "threat_id": "T06",
+    "measure_id": "M16"
+  },
+  {
+    "threat_id": "T06",
+    "measure_id": "M17"
+  },
+  {
+    "threat_id": "T10",
+    "measure_id": "M17"
+  },
+  {
+    "threat_id": "T13",
+    "measure_id": "M17"
+  },
+  {
+    "threat_id": "T07",
+    "measure_id": "M18"
+  },
+  {
+    "threat_id": "T10",
+    "measure_id": "M18"
+  },
+  {
+    "threat_id": "T13",
+    "measure_id": "M19"
+  },
+  {
+    "threat_id": "T13",
+    "measure_id": "M20"
+  },
+  {
+    "threat_id": "T13",
+    "measure_id": "M21"
+  },
+  {
+    "threat_id": "T03",
+    "measure_id": "M22"
+  },
+  {
+    "threat_id": "T08",
+    "measure_id": "M22"
+  },
+  {
+    "threat_id": "T09",
+    "measure_id": "M22"
+  },
+  {
+    "threat_id": "T13",
+    "measure_id": "M22"
+  },
+  {
+    "threat_id": "T03",
+    "measure_id": "M23"
+  },
+  {
+    "threat_id": "T08",
+    "measure_id": "M23"
+  },
+  {
+    "threat_id": "T09",
+    "measure_id": "M23"
+  },
+  {
+    "threat_id": "T13",
+    "measure_id": "M23"
+  },
+  {
+    "threat_id": "T08",
+    "measure_id": "M24"
+  },
+  {
+    "threat_id": "T09",
+    "measure_id": "M24"
+  },
+  {
+    "threat_id": "T13",
+    "measure_id": "M24"
+  },
+  {
+    "threat_id": "T10",
+    "measure_id": "M25"
+  },
+  {
+    "threat_id": "T14",
+    "measure_id": "M25"
+  },
+  {
+    "threat_id": "T03",
+    "measure_id": "M26"
+  },
+  {
+    "threat_id": "T13",
+    "measure_id": "M26"
+  },
+  {
+    "threat_id": "T11",
+    "measure_id": "M27"
+  },
+  {
+    "threat_id": "T04",
+    "measure_id": "M28"
+  },
+  {
+    "threat_id": "T06",
+    "measure_id": "M28"
+  },
+  {
+    "threat_id": "T01",
+    "measure_id": "M29"
+  },
+  {
+    "threat_id": "T02",
+    "measure_id": "M29"
+  },
+  {
+    "threat_id": "T03",
+    "measure_id": "M29"
+  },
+  {
+    "threat_id": "T04",
+    "measure_id": "M29"
+  },
+  {
+    "threat_id": "T06",
+    "measure_id": "M29"
+  },
+  {
+    "threat_id": "T14",
+    "measure_id": "M29"
+  },
+  {
+    "threat_id": "T15",
+    "measure_id": "M29"
+  },
+  {
+    "threat_id": "T07",
+    "measure_id": "M30"
+  },
+  {
+    "threat_id": "T08",
+    "measure_id": "M30"
+  }
+]
