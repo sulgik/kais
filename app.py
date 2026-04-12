@@ -281,29 +281,46 @@ with tab_trinity:
     try:
         from streamlit_agraph import agraph, Node, Edge, Config
 
-        # Filter controls — pair-based
+        # Filter controls — pair-based (NIS 기본 선택)
         filter_col1, filter_col2 = st.columns(2)
         with filter_col1:
             show_nis_pair = st.checkbox("🔴 NIS 위협 + 🔵 대책", value=True, key="trinity_nis_pair",
                                         help="NIS 보안위협(T##)과 보안대책(M##)을 함께 표시")
         with filter_col2:
-            show_ext_pair = st.checkbox("🟠 OWASP + 🟣 ATLAS 공격기법", value=True, key="trinity_ext_pair",
+            show_ext_pair = st.checkbox("🟠 OWASP + 🟣 ATLAS 공격기법", value=False, key="trinity_ext_pair",
                                         help="OWASP LLM Top 10과 MITRE ATLAS 공격기법을 함께 표시")
 
-        # Build graph data — measures always shown when NIS pair is selected
+        # Build graph data
         graph_data = kg.build_graph_data(
             show_nis=show_nis_pair, show_atlas=show_ext_pair,
             show_owasp=show_ext_pair, show_measures=show_nis_pair,
         )
 
-        # Convert to agraph objects
-        agraph_nodes = []
+        # Bipartite column layout: assign x by group, distribute y evenly
+        from collections import defaultdict
+        GROUP_X = {"ATLAS": -600, "OWASP": -200, "NIS Threat": 200, "NIS Measure": 600}
+        # When only NIS pair shown, center the two columns
+        if show_nis_pair and not show_ext_pair:
+            GROUP_X = {"NIS Threat": -250, "NIS Measure": 250}
+
+        nodes_by_group = defaultdict(list)
         for n in graph_data["nodes"]:
-            agraph_nodes.append(Node(
-                id=n["id"], label=n["label"], color=n["color"],
-                shape=n["shape"], size=n["size"], title=n["title"],
-                font={"color": "#333333", "size": 11},
-            ))
+            nodes_by_group[n["group"]].append(n)
+
+        agraph_nodes = []
+        for group, group_nodes in nodes_by_group.items():
+            x = GROUP_X.get(group, 0)
+            count = len(group_nodes)
+            y_step = max(60, 900 // max(count, 1))
+            for i, n in enumerate(group_nodes):
+                y = (i - (count - 1) / 2) * y_step
+                agraph_nodes.append(Node(
+                    id=n["id"], label=n["label"], color=n["color"],
+                    shape=n["shape"], size=n["size"], title=n["title"],
+                    font={"color": "#333333", "size": 11},
+                    x=x, y=int(y),
+                ))
+
         agraph_edges = []
         for e in graph_data["edges"]:
             edge_kwargs = {"source": e["source"], "target": e["target"], "color": e.get("color", "#888")}
@@ -315,7 +332,7 @@ with tab_trinity:
             width="100%",
             height=900,
             directed=False,
-            physics=True,
+            physics=False,
             hierarchical=False,
         )
 
