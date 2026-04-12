@@ -3,132 +3,132 @@
     "id": "LLM01",
     "name": "Prompt Injection",
     "name_ko": "프롬프트 인젝션",
-    "description": "A vulnerability where user prompts or external content alter an LLM's behavior or output in unintended ways. It manifests as direct injection (user input manipulating model behavior) or indirect injection (external sources like websites or files containing hidden instructions). Successful attacks can lead to sensitive information disclosure, unauthorized function access, and manipulation of critical decisions.",
+    "description": "사용자 프롬프트나 외부 콘텐츠가 LLM의 동작 또는 출력을 의도치 않은 방식으로 변경하는 취약점입니다. 직접 인젝션(사용자 입력이 모델 동작을 조작)과 간접 인젝션(웹사이트·파일 등 외부 소스에 숨겨진 지시가 포함)으로 나타납니다. 공격에 성공하면 민감 정보 노출, 무단 기능 접근, 핵심 의사결정 조작으로 이어질 수 있습니다.",
     "examples": [
-      "Direct injection: attacker manipulates a support chatbot to ignore guidelines, query private data stores, and send emails",
-      "Indirect injection: hidden instructions in webpages cause LLM to exfiltrate private conversation data via image URL",
-      "Unintentional injection: resume optimization tool triggers AI-detection instructions embedded in job descriptions",
-      "Malicious document modifications in RAG repositories alter the LLM's output to generate misleading results",
-      "Payload splitting: fragmented malicious prompts in resumes combine to produce positive recommendations despite actual content",
-      "Multimodal injection: malicious prompt within an image combined with text alters model behavior",
-      "Adversarial suffix: meaningless character strings appended to prompts influence the LLM's output maliciously",
-      "Multilingual/obfuscated attack: encoded instructions using multiple languages or Base64 bypass content filters"
+      "직접 인젝션: 공격자가 지원 챗봇을 조작해 운영 지침을 무시하고 개인 데이터 저장소를 조회하며 이메일을 전송하게 함",
+      "간접 인젝션: 웹페이지에 숨겨진 지시로 인해 LLM이 이미지 URL을 통해 개인 대화 데이터를 외부로 유출",
+      "비의도적 인젝션: 이력서 최적화 도구가 채용공고에 삽입된 AI 탐지 지시를 그대로 실행",
+      "RAG 저장소의 악성 문서 변조로 LLM 출력이 오도하는 결과를 생성",
+      "페이로드 분할: 이력서에 분산된 악성 프롬프트 조각이 결합돼 실제 내용과 무관하게 긍정적 추천을 생성",
+      "멀티모달 인젝션: 이미지 내 악성 프롬프트와 텍스트를 조합해 모델 동작을 변경",
+      "적대적 접미사: 의미 없는 문자열을 프롬프트에 추가해 LLM 출력을 악의적으로 조작",
+      "다국어·난독화 공격: 여러 언어나 Base64로 인코딩된 지시로 콘텐츠 필터를 우회"
     ]
   },
   {
     "id": "LLM02",
     "name": "Sensitive Information Disclosure",
     "name_ko": "민감 정보 노출",
-    "description": "LLMs may expose sensitive data including PII, financial details, health records, business secrets, and security credentials through their outputs. Risk factors include inadequate data sanitization, improper access controls, and the potential for attackers to extract training data through prompt injection or model inversion techniques. System restrictions may not always be honored and could be bypassed.",
+    "description": "LLM은 출력을 통해 개인식별정보(PII), 금융 정보, 의료 기록, 영업 비밀, 보안 자격증명 등 민감한 데이터를 노출할 수 있습니다. 위험 요인으로는 불충분한 데이터 정제, 부적절한 접근 통제, 프롬프트 인젝션이나 모델 역전 기술을 통한 학습 데이터 추출 가능성이 있습니다. 시스템 제한이 항상 준수되지 않으며 우회될 수 있습니다.",
     "examples": [
-      "Unintentional exposure of another user's personal data due to insufficient sanitization",
-      "Targeted prompt injection to bypass input filters and extract confidential information",
-      "Sensitive data inadvertently included in training processes later disclosed in model outputs"
+      "불충분한 정제로 인해 다른 사용자의 개인 데이터가 의도치 않게 노출",
+      "입력 필터를 우회하는 프롬프트 인젝션으로 기밀 정보를 추출",
+      "학습 과정에 실수로 포함된 민감 데이터가 이후 모델 출력에서 공개"
     ]
   },
   {
     "id": "LLM03",
     "name": "Supply Chain",
     "name_ko": "공급망 취약점",
-    "description": "LLM supply chains face vulnerabilities affecting the integrity of training data, models, and deployment platforms. Risks include biased outputs, security breaches, and system failures through tampering or poisoning of third-party pre-trained models and data. The emergence of open-access LLMs, fine-tuning methods like LoRA, and on-device deployment increases the attack surface.",
+    "description": "LLM 공급망은 학습 데이터, 모델, 배포 플랫폼의 무결성에 영향을 미치는 취약점에 노출되어 있습니다. 제3자 사전 학습 모델과 데이터의 변조 또는 오염을 통해 편향된 출력, 보안 침해, 시스템 장애 위험이 있습니다. 오픈소스 LLM, LoRA 같은 파인튜닝 기법, 온디바이스 배포의 확산으로 공격 표면이 점점 넓어지고 있습니다.",
     "examples": [
-      "Malware in compromised Python dependencies targeting model development environments",
-      "Direct model parameter manipulation to bypass safety features and spread misinformation",
-      "Fine-tuned models designed to pass safety benchmarks while containing hidden targeted vulnerabilities",
-      "Malicious LoRA adapters merged into production models through supplier infiltration",
-      "Fake versions of popular models published with embedded malware and backdoors",
-      "Reverse-engineered mobile applications with tampered models redirecting users to fraudulent sites",
-      "Dataset poisoning to create backdoors favoring specific entities during fine-tuning",
-      "CloudBorne and CloudJacking attacks exploiting cloud infrastructure vulnerabilities"
+      "모델 개발 환경을 노리는 악성 Python 패키지 의존성에 멀웨어 삽입",
+      "안전 기능 우회 및 허위 정보 전파를 위해 모델 파라미터를 직접 조작",
+      "안전 벤치마크는 통과하지만 숨겨진 표적 취약점을 담은 파인튜닝 모델 배포",
+      "공급업체 침투를 통해 악성 LoRA 어댑터를 프로덕션 모델에 병합",
+      "악성 코드와 백도어가 내장된 인기 모델의 위조 버전 배포",
+      "변조된 모델로 사용자를 사기 사이트로 유도하는 역분석된 모바일 앱",
+      "파인튜닝 시 특정 개체에 유리한 백도어를 만들기 위해 데이터셋을 오염",
+      "클라우드 인프라 취약점을 악용한 CloudBorne·CloudJacking 공격"
     ]
   },
   {
     "id": "LLM04",
     "name": "Data and Model Poisoning",
     "name_ko": "데이터 및 모델 오염",
-    "description": "Data poisoning involves manipulating training, fine-tuning, or embedding data to introduce vulnerabilities, backdoors, or biases into LLMs. This compromises model security and ethical behavior, potentially leading to harmful outputs, degraded performance, or exploited downstream systems. As an integrity attack, poisoning particularly threatens models trained on unverified external data sources or distributed through shared repositories.",
+    "description": "데이터 오염은 LLM의 학습·파인튜닝·임베딩 데이터를 조작하여 취약점, 백도어, 편향을 삽입하는 공격입니다. 모델의 보안과 윤리적 동작을 훼손하여 유해한 출력, 성능 저하, 하위 시스템 악용으로 이어질 수 있습니다. 무결성 공격의 일종으로, 검증되지 않은 외부 데이터 소스로 학습하거나 공유 저장소를 통해 배포되는 모델에 특히 위협적입니다.",
     "examples": [
-      "Attackers inject biased or malicious data during training to skew model outputs toward spreading misinformation",
-      "Toxic, unfiltered training data produces harmful or biased outputs that propagate dangerous information",
-      "Falsified documents inserted by competitors cause models to generate inaccurate information",
-      "Backdoor triggers embedded in training data enable authentication bypass or data exfiltration",
-      "Prompt injection techniques combined with poisoning allow attackers to compromise model outputs"
+      "공격자가 학습 중 편향되거나 악성 데이터를 주입해 허위 정보 확산 방향으로 모델 출력을 왜곡",
+      "정제되지 않은 독성 학습 데이터가 유해하거나 편향된 출력을 생성해 위험 정보를 전파",
+      "경쟁자가 삽입한 위조 문서로 인해 모델이 부정확한 정보를 생성",
+      "학습 데이터에 내장된 백도어 트리거가 인증 우회 또는 데이터 유출을 가능하게 함",
+      "오염과 결합된 프롬프트 인젝션 기법으로 공격자가 모델 출력을 손상"
     ]
   },
   {
     "id": "LLM05",
     "name": "Improper Output Handling",
     "name_ko": "부적절한 출력 처리",
-    "description": "Insufficient validation, sanitization, and handling of the outputs generated by LLMs before they are passed downstream to other components and systems. Since LLM output can be influenced through prompts, users gain indirect access to system functions. Exploitation can lead to XSS, CSRF, SSRF, privilege escalation, and remote code execution.",
+    "description": "LLM이 생성한 출력이 다운스트림 구성 요소나 시스템으로 전달되기 전에 충분한 검증·정제·처리가 이루어지지 않는 것입니다. LLM 출력은 프롬프트를 통해 영향을 받을 수 있으므로 사용자는 간접적으로 시스템 기능에 접근할 수 있습니다. 이를 악용하면 XSS, CSRF, SSRF, 권한 상승, 원격 코드 실행으로 이어질 수 있습니다.",
     "examples": [
-      "LLM output executed directly in system shells or eval functions causes remote code execution",
-      "LLM-generated JavaScript or Markdown rendered in browsers triggers XSS attacks",
-      "Unsanitized LLM-generated SQL queries enable SQL injection attacks",
-      "LLM output used in file paths without sanitization creates path traversal vulnerabilities",
-      "LLM content in email templates without escaping enables phishing attacks",
-      "LLM generates malicious code or hallucinates malware-infected packages that developers use"
+      "LLM 출력이 시스템 셸이나 eval 함수에서 직접 실행되어 원격 코드 실행 발생",
+      "LLM이 생성한 JavaScript·Markdown이 브라우저에서 렌더링되어 XSS 공격 유발",
+      "정제되지 않은 LLM 생성 SQL 쿼리로 SQL 인젝션 공격 가능",
+      "파일 경로에 정제 없이 LLM 출력을 사용해 경로 탐색(Path Traversal) 취약점 발생",
+      "이스케이프 없이 이메일 템플릿에 LLM 콘텐츠를 포함해 피싱 공격 가능",
+      "LLM이 악성 코드를 생성하거나 멀웨어 감염 패키지를 환각하여 개발자가 그대로 사용"
     ]
   },
   {
     "id": "LLM06",
     "name": "Excessive Agency",
     "name_ko": "과도한 권한 위임",
-    "description": "LLM-based systems are granted too much functionality, permission, or autonomy to call functions or extensions. This enables damaging actions through unexpected or manipulated LLM outputs, whether caused by hallucination, prompt injection, or malicious actors, affecting confidentiality, integrity, and availability.",
+    "description": "LLM 기반 시스템에 함수나 확장 기능 호출을 위한 과도한 기능, 권한 또는 자율성이 부여되는 것입니다. 환각, 프롬프트 인젝션, 악의적 행위자에 의한 예상치 못하거나 조작된 LLM 출력을 통해 기밀성·무결성·가용성에 영향을 주는 손상 행위가 가능해집니다.",
     "examples": [
-      "Email summarization extension with send capabilities exploited via indirect prompt injection to forward sensitive inbox contents to attackers",
-      "LLM agent accessing a product database with unnecessary UPDATE/INSERT/DELETE permissions beyond required read-only scope",
-      "Shell command extension failing to restrict execution to one specific command, allowing arbitrary command execution",
-      "Document deletion feature performing operations without user confirmation or verification",
-      "Abandoned development plugin remaining available to the agent despite no longer being needed",
-      "Mail-reading OAuth session authenticated with broader permissions than necessary"
+      "전송 기능이 있는 이메일 요약 확장 기능이 간접 프롬프트 인젝션으로 악용되어 민감한 수신함 내용을 공격자에게 전달",
+      "필요한 읽기 전용 범위를 초과한 불필요한 UPDATE/INSERT/DELETE 권한으로 제품 데이터베이스에 접근하는 LLM 에이전트",
+      "특정 명령만 실행하도록 제한하지 않아 임의 명령 실행을 허용하는 셸 명령 확장 기능",
+      "사용자 확인이나 검증 없이 작업을 수행하는 문서 삭제 기능",
+      "더 이상 필요하지 않음에도 에이전트에서 계속 사용 가능한 상태로 남겨진 개발용 플러그인",
+      "필요 이상의 광범위한 권한으로 인증된 메일 읽기 OAuth 세션"
     ]
   },
   {
     "id": "LLM07",
     "name": "System Prompt Leakage",
     "name_ko": "시스템 프롬프트 유출",
-    "description": "System prompts guiding LLM behavior may inadvertently contain sensitive information not intended for discovery. The core security issue is not the prompt disclosure itself, but rather underlying problems such as sensitive data exposure, security control bypass, or improper privilege separation that the leaked information enables.",
+    "description": "LLM 동작을 안내하는 시스템 프롬프트가 의도치 않게 민감한 정보를 노출할 수 있습니다. 핵심 보안 문제는 프롬프트 자체의 공개가 아니라, 유출된 정보가 가능하게 하는 민감 데이터 노출, 보안 통제 우회, 부적절한 권한 분리 같은 근본적인 문제입니다.",
     "examples": [
-      "Attackers extract credentials embedded in system prompts and leverage them for unauthorized access to connected tools or systems",
-      "Attackers extract filtering rules from system prompts, then use prompt injection techniques to bypass content restrictions",
-      "Attackers discover role-based access structures revealed in system prompts and identify privilege escalation opportunities"
+      "공격자가 시스템 프롬프트에 내장된 자격증명을 추출해 연결된 도구나 시스템에 무단 접근",
+      "공격자가 시스템 프롬프트에서 필터링 규칙을 추출한 후 프롬프트 인젝션으로 콘텐츠 제한을 우회",
+      "공격자가 시스템 프롬프트에 드러난 역할 기반 접근 구조를 파악해 권한 상승 기회를 식별"
     ]
   },
   {
     "id": "LLM08",
     "name": "Vector and Embedding Weaknesses",
     "name_ko": "벡터 및 임베딩 취약점",
-    "description": "Vulnerabilities in systems utilizing Retrieval Augmented Generation (RAG) with LLMs, where weaknesses can be leveraged to inject harmful content, manipulate outputs, or expose confidential information. Risks stem from inadequate security in how embeddings are generated, maintained, and retrieved from vector databases.",
+    "description": "LLM과 함께 RAG(검색 증강 생성)를 활용하는 시스템의 취약점으로, 이를 악용하면 유해 콘텐츠 삽입, 출력 조작, 기밀 정보 노출이 가능합니다. 위험은 임베딩이 벡터 데이터베이스에서 생성·유지·검색되는 방식의 불충분한 보안에서 비롯됩니다.",
     "examples": [
-      "Data poisoning via concealed malicious instructions (hidden text) embedded in documents submitted to RAG systems",
-      "Unauthorized cross-tenant access: sensitive embeddings from one user group retrieved for another in shared vector database environments",
-      "Behavioral degradation: RAG integration causing unintended shifts in model behavior",
-      "Embedding inversion: attackers reverse-engineer embeddings to recover original source information"
+      "RAG 시스템에 제출된 문서에 숨겨진 텍스트(은닉 지시)를 삽입해 데이터를 오염",
+      "무단 크로스 테넌트 접근: 공유 벡터 데이터베이스 환경에서 한 사용자 그룹의 민감한 임베딩이 다른 그룹에 검색",
+      "행동 저하: RAG 통합으로 인해 모델 동작이 의도치 않은 방향으로 변화",
+      "임베딩 역전: 공격자가 임베딩을 역분석해 원본 소스 정보를 복원"
     ]
   },
   {
     "id": "LLM09",
     "name": "Misinformation",
     "name_ko": "허위 정보 생성",
-    "description": "LLMs generate false or misleading information that appears credible. The primary cause is hallucination, where models fabricate content by filling training data gaps with statistical patterns, though biases and incomplete information also contribute. Overreliance compounds the risk when users fail to verify LLM outputs before integrating them into critical decisions.",
+    "description": "LLM이 신뢰할 수 있어 보이는 거짓되거나 오도하는 정보를 생성합니다. 주요 원인은 환각(Hallucination)으로, 모델이 학습 데이터의 공백을 통계적 패턴으로 채워 사실이 아닌 내용을 만들어내는 것이며, 편향과 불완전한 정보도 기여합니다. 사용자가 LLM 출력을 검증 없이 중요한 결정에 활용하면 위험이 더욱 증폭됩니다.",
     "examples": [
-      "Attackers identify commonly hallucinated package names from coding assistants, then publish malicious packages with those names",
-      "Medical chatbots without sufficient accuracy safeguards produce poor health information that harms patients",
-      "LLMs generate fabricated legal cases or unsupported medical claims that users treat as credible"
+      "공격자가 코딩 보조 도구에서 자주 환각되는 패키지 이름을 파악한 후 해당 이름으로 악성 패키지를 배포",
+      "충분한 정확도 보호 장치가 없는 의료 챗봇이 환자에게 해로운 부실한 건강 정보를 제공",
+      "LLM이 존재하지 않는 법률 사례나 근거 없는 의학적 주장을 생성하고 사용자가 이를 신뢰"
     ]
   },
   {
     "id": "LLM10",
     "name": "Unbounded Consumption",
     "name_ko": "무제한 리소스 소비",
-    "description": "LLM applications permit excessive, uncontrolled inferences that expose systems to denial of service, financial losses, and intellectual property theft. The high computational demands of LLMs make them particularly susceptible to resource exploitation in cloud environments. Attackers exploit this by initiating high-volume operations or crafting resource-intensive queries.",
+    "description": "LLM 애플리케이션이 과도하고 통제되지 않은 추론을 허용해 서비스 거부(DoS), 금전적 손실, 지식재산 도용 위험에 노출됩니다. LLM의 높은 컴퓨팅 수요로 인해 클라우드 환경에서 리소스 악용에 특히 취약합니다. 공격자는 대량 작업을 시작하거나 리소스 집약적인 쿼리를 만들어 이를 악용합니다.",
     "examples": [
-      "Large input flooding causing memory exhaustion and system crashes",
-      "High-volume API requests depleting computational resources",
-      "Specially crafted complex queries triggering expensive processing routines",
-      "Exploiting pay-per-use models to generate unsustainable costs (Denial of Wallet)",
-      "Extracting model behavior through systematic API queries to replicate functionality",
-      "Bypassing input filters to conduct side-channel attacks and harvest model information"
+      "대용량 입력 폭주로 인한 메모리 고갈 및 시스템 충돌",
+      "대량 API 요청으로 컴퓨팅 리소스를 고갈",
+      "특수 제작된 복잡한 쿼리로 비용이 큰 처리 루틴을 유발",
+      "종량제 모델을 악용해 지속 불가능한 비용을 발생시키는 지갑 거부 공격(Denial of Wallet)",
+      "체계적인 API 쿼리로 모델 동작을 추출해 기능을 복제",
+      "입력 필터를 우회해 사이드채널 공격을 수행하고 모델 정보를 수집"
     ]
   }
 ]

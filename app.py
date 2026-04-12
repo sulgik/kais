@@ -4,9 +4,13 @@ Streamlit Web UI
 """
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 import streamlit as st
 from knowledge_graph import SecurityKnowledgeGraph
+
+KAIS_VERSION = "0.1.0"
+KAIS_DATA_SOURCE = "NIS AI보안 가이드북 (2025.12)"
 
 st.set_page_config(
     page_title="KAIS - 국가·공공기관 AI보안 어드바이저",
@@ -241,7 +245,230 @@ with tab_incidents:
     else:
         st.info("사고 사례 데이터가 없습니다.")
 
-# --- Tab 3: Checklist Generator ---
+def _generate_checklist_html(cl_build: str, cl_ai: str, result: dict) -> str:
+    """Generate a standalone HTML checklist page."""
+    generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    threat_rows = ""
+    for t in result["threats"]:
+        threat_rows += f"""
+        <tr>
+          <td><span class="badge badge-threat">{t['id']}</span></td>
+          <td><strong>{t['name']}</strong></td>
+          <td>{t.get('risk', '')}</td>
+        </tr>"""
+
+    checklist_rows = ""
+    for i, m in enumerate(result["measures"], 1):
+        label = m.get("checklist") or m["name"]
+        checklist_rows += f"""
+        <tr>
+          <td class="check-cell"><input type="checkbox" id="chk_{m['id']}"></td>
+          <td><label for="chk_{m['id']}"><span class="badge badge-measure">{m['id']}</span></label></td>
+          <td><label for="chk_{m['id']}">{label}</label></td>
+        </tr>"""
+
+    return f"""<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KAIS 체크리스트 — {cl_build} + {cl_ai}</title>
+<style>
+  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{
+    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 14px;
+    background: #f5f7fa;
+    color: #1a1a2e;
+    padding: 24px;
+  }}
+  .page {{
+    max-width: 900px;
+    margin: 0 auto;
+    background: #fff;
+    border: 2px solid #2f55a5;
+    border-radius: 10px;
+    padding: 32px 36px;
+  }}
+  /* Header */
+  .header {{
+    border-bottom: 3px solid #2f55a5;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+  }}
+  .header h1 {{
+    font-size: 22px;
+    color: #2f55a5;
+    letter-spacing: -0.5px;
+  }}
+  .header h2 {{
+    font-size: 15px;
+    font-weight: normal;
+    color: #555;
+    margin-top: 4px;
+  }}
+  /* Meta grid */
+  .meta-grid {{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    background: #f0f4ff;
+    border: 1px solid #c5d3f5;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+  }}
+  .meta-item label {{ font-size: 11px; color: #777; display: block; margin-bottom: 2px; }}
+  .meta-item span  {{ font-size: 14px; font-weight: bold; color: #1a1a2e; }}
+  /* Warning */
+  .warning {{
+    background: #fff8e1;
+    border-left: 4px solid #f0a500;
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #7a5c00;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }}
+  /* Section titles */
+  h3 {{
+    font-size: 15px;
+    color: #2f55a5;
+    margin: 20px 0 10px;
+    padding-left: 8px;
+    border-left: 4px solid #2f55a5;
+  }}
+  /* Tables */
+  table {{
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }}
+  th {{
+    background: #2f55a5;
+    color: #fff;
+    padding: 8px 10px;
+    text-align: left;
+    font-size: 12px;
+  }}
+  td {{
+    padding: 8px 10px;
+    border-bottom: 1px solid #e8eaf0;
+    vertical-align: top;
+    line-height: 1.5;
+  }}
+  tr:hover td {{ background: #f5f7ff; }}
+  .check-cell {{ width: 32px; text-align: center; }}
+  input[type="checkbox"] {{ width: 16px; height: 16px; cursor: pointer; accent-color: #2f55a5; }}
+  /* Badges */
+  .badge {{
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 12px;
+    white-space: nowrap;
+  }}
+  .badge-threat  {{ background: #ed1c24; color: #fff; }}
+  .badge-measure {{ background: #2f55a5; color: #fff; }}
+  /* Footer */
+  .footer {{
+    margin-top: 28px;
+    padding-top: 14px;
+    border-top: 1px solid #ddd;
+    font-size: 11px;
+    color: #999;
+    display: flex;
+    justify-content: space-between;
+  }}
+  .sources {{ font-size: 11px; color: #777; margin-top: 6px; line-height: 1.7; }}
+  @media print {{
+    body {{ background: white; padding: 0; }}
+    .page {{ border: 1px solid #aaa; padding: 20px; }}
+    tr:hover td {{ background: none; }}
+  }}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>🛡️ KAIS — AI보안 체크리스트</h1>
+    <h2>국가·공공기관 AI보안 어드바이저 · K-AI Security Advisor</h2>
+  </div>
+
+  <div class="meta-grid">
+    <div class="meta-item">
+      <label>구축 유형</label>
+      <span>{cl_build}</span>
+    </div>
+    <div class="meta-item">
+      <label>AI 유형</label>
+      <span>{cl_ai}</span>
+    </div>
+    <div class="meta-item">
+      <label>생성일시</label>
+      <span>{generated_at}</span>
+    </div>
+    <div class="meta-item">
+      <label>버전</label>
+      <span>KAIS v{KAIS_VERSION}</span>
+    </div>
+    <div class="meta-item">
+      <label>위협 수</label>
+      <span>{len(result['threats'])}개</span>
+    </div>
+    <div class="meta-item">
+      <label>대책 수</label>
+      <span>{len(result['measures'])}개</span>
+    </div>
+  </div>
+
+  <div class="warning">
+    ⚠️ <strong>실험적 서비스 (Experimental)</strong> — 본 체크리스트는 연구·교육 목적의 비공식 자료이며 국가정보원(NIS)과 무관합니다.
+    답변은 NIS AI보안 가이드북(2025.12)을 기반으로 생성되며, 공식 보안 검토를 대체하지 않습니다.
+  </div>
+
+  <h3>주요 보안위협</h3>
+  <table>
+    <thead>
+      <tr><th style="width:80px">위협 ID</th><th style="width:160px">위협명</th><th>위험 내용</th></tr>
+    </thead>
+    <tbody>{threat_rows}
+    </tbody>
+  </table>
+
+  <h3>보안대책 체크리스트</h3>
+  <table>
+    <thead>
+      <tr><th class="check-cell">✓</th><th style="width:80px">대책 ID</th><th>점검 항목</th></tr>
+    </thead>
+    <tbody>{checklist_rows}
+    </tbody>
+  </table>
+
+  <div class="sources">
+    <strong>참고 출처:</strong><br>
+    · NIS AI보안 가이드북 (2025.12) — <a href="https://www.nis.go.kr" target="_blank">www.nis.go.kr</a><br>
+    · OWASP Top 10 for LLM Applications — <a href="https://genai.owasp.org/" target="_blank">genai.owasp.org</a><br>
+    · NIST AI Risk Management Framework — <a href="https://www.nist.gov/artificial-intelligence" target="_blank">nist.gov/artificial-intelligence</a><br>
+    · MITRE ATLAS — <a href="https://atlas.mitre.org/" target="_blank">atlas.mitre.org</a>
+  </div>
+
+  <div class="footer">
+    <span>KAIS v{KAIS_VERSION} · {generated_at} · {cl_build} + {cl_ai}</span>
+    <span>Made by sulgik@gmail.com · 비공식 실험 서비스</span>
+  </div>
+
+</div>
+</body>
+</html>"""
+
+
+# --- Tab 4: Checklist Generator ---
 with tab_checklist:
     st.subheader("보안대책 체크리스트 생성기")
     st.markdown("구축 유형과 AI 유형을 선택하면 맞춤형 체크리스트를 생성합니다.")
@@ -288,6 +515,17 @@ with tab_checklist:
                 st.checkbox(f"**{m['id']}** {m['checklist']}", key=f"check_{m['id']}")
             else:
                 st.checkbox(f"**{m['id']}** {m['name']}", key=f"check_{m['id']}")
+
+        st.divider()
+        html_content = _generate_checklist_html(cl_build, cl_ai, result)
+        fname = f"kais_checklist_{cl_build}_{cl_ai}_{datetime.now().strftime('%Y%m%d_%H%M')}.html"
+        st.download_button(
+            label="⬇️ HTML로 내보내기",
+            data=html_content.encode("utf-8"),
+            file_name=fname,
+            mime="text/html",
+            help="독립 실행 가능한 HTML 체크리스트 파일로 저장합니다.",
+        )
 
 # --- Tab 5: MCP 연결 안내 ---
 with tab_mcp:
