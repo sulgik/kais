@@ -1,5 +1,5 @@
 """
-KAIS - K-AI Security Advisor
+K-AISecMap - AI Security Mapping Advisor
 Streamlit Web UI
 """
 import json
@@ -9,11 +9,11 @@ from pathlib import Path
 import streamlit as st
 from knowledge_graph import SecurityKnowledgeGraph
 
-KAIS_VERSION = "0.1.0"
-KAIS_DATA_SOURCE = "NIS AI보안 가이드북 (2025.12)"
+APP_VERSION = "0.1.0"
+APP_DATA_SOURCE = "NIS AI보안 가이드북 (2025.12)"
 
 st.set_page_config(
-    page_title="KAIS - 국가·공공기관 AI보안 어드바이저",
+    page_title="K-AISecMap - AI 보안 매핑 어드바이저",
     page_icon="🛡️",
     layout="wide",
 )
@@ -87,7 +87,7 @@ def show_threat_image(threat_id: str):
 
 # --- Sidebar ---
 with st.sidebar:
-    st.title("🛡️ KAIS")
+    st.title("🛡️ K-AISecMap")
 
     stats = kg.summary()
     atlas_count = stats.get('atlas_techniques', 0)
@@ -183,10 +183,10 @@ with st.sidebar:
 st.markdown("""
 <div style="padding:16px 0 12px;">
   <div style="font-size:2.2rem; font-weight:900; letter-spacing:-1.5px; color:#1a1a2e; line-height:1.15;">
-    국가·공공기관 AI보안 어드바이저
+    K-AISecMap
   </div>
   <div style="font-size:1rem; font-weight:400; color:#2f55a5; letter-spacing:2px; margin-top:6px; text-transform:uppercase;">
-    KAIS — K-AI Security Advisor
+    AI Security Mapping Advisor
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -607,7 +607,7 @@ def _generate_checklist_html(cl_build: str, cl_ai: str, result: dict) -> str:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KAIS 체크리스트 — {cl_build} + {cl_ai}</title>
+<title>K-AISecMap 체크리스트 — {cl_build} + {cl_ai}</title>
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{
@@ -730,8 +730,8 @@ def _generate_checklist_html(cl_build: str, cl_ai: str, result: dict) -> str:
 <div class="page">
 
   <div class="header">
-    <h1>🛡️ KAIS — AI보안 체크리스트</h1>
-    <h2>국가·공공기관 AI보안 어드바이저 · K-AI Security Advisor</h2>
+    <h1>🛡️ K-AISecMap — AI보안 체크리스트</h1>
+    <h2>국가·공공기관 AI보안 매핑 어드바이저 · AI Security Mapping Advisor</h2>
   </div>
 
   <div class="meta-grid">
@@ -749,7 +749,7 @@ def _generate_checklist_html(cl_build: str, cl_ai: str, result: dict) -> str:
     </div>
     <div class="meta-item">
       <label>버전</label>
-      <span>KAIS v{KAIS_VERSION}</span>
+      <span>K-AISecMap v{APP_VERSION}</span>
     </div>
     <div class="meta-item">
       <label>위협 수</label>
@@ -793,7 +793,7 @@ def _generate_checklist_html(cl_build: str, cl_ai: str, result: dict) -> str:
   </div>
 
   <div class="footer">
-    <span>KAIS v{KAIS_VERSION} · {generated_at} · {cl_build} + {cl_ai}</span>
+    <span>K-AISecMap v{APP_VERSION} · {generated_at} · {cl_build} + {cl_ai}</span>
     <span>
       <a href="https://k-ai-sec.streamlit.app" target="_blank">k-ai-sec.streamlit.app</a> ·
       <a href="https://github.com/sulgik/kais" target="_blank">github.com/sulgik/kais</a> ·
@@ -870,7 +870,7 @@ with tab_mcp:
     st.subheader("🔌 AI 어드바이저와 대화하기 — MCP 연결")
     st.markdown(
         """
-KAIS 지식그래프를 Claude와 연결하면, **자연어로 AI 보안 질문**을 할 수 있습니다.
+K-AISecMap 지식그래프를 Claude와 연결하면, **자연어로 AI 보안 질문**을 할 수 있습니다.
 API 키를 여기에 입력할 필요 없이, 본인의 Claude 환경에서 바로 사용합니다.
 
 ---
