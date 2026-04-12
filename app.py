@@ -288,6 +288,49 @@ NIS 위협(T##) ↔ ATLAS 기법(AML.T####) ↔ OWASP(LLM##)
         st.link_button("원문 보기 — atlas.mitre.org", "https://atlas.mitre.org/", use_container_width=True)
 
     st.divider()
+
+    # ── 홈 네트워크 그래프 ──
+    try:
+        from streamlit_agraph import agraph, Node, Edge, Config
+
+        graph_data = kg.build_graph_data(
+            show_nis=True, show_atlas=True,
+            show_owasp=True, show_measures=False,
+        )
+
+        agraph_nodes = []
+        for n in graph_data["nodes"]:
+            agraph_nodes.append(Node(
+                id=n["id"], label=n["label"], color=n["color"],
+                shape=n["shape"], size=n["size"], title=n["title"],
+                font={"color": "#333333", "size": 12},
+            ))
+
+        agraph_edges = []
+        for e in graph_data["edges"]:
+            edge_kwargs = {"source": e["source"], "target": e["target"], "color": e.get("color", "#888")}
+            if e.get("width"):
+                edge_kwargs["width"] = e["width"]
+            agraph_edges.append(Edge(**edge_kwargs))
+
+        config = Config(
+            width="100%", height=600,
+            directed=False, physics=True, hierarchical=False,
+        )
+
+        st.markdown(
+            '<span style="font-size:0.85em;">'
+            '<span style="display:inline-block;width:12px;height:12px;background:#ed1c24;border-radius:50%;vertical-align:middle;"></span> <b>NIS 위협</b> &nbsp; '
+            '<span style="display:inline-block;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:12px solid #7b2d8e;vertical-align:middle;"></span> <b>ATLAS 공격기법</b> &nbsp; '
+            '<span style="display:inline-block;width:12px;height:12px;background:#f58220;vertical-align:middle;"></span> <b>OWASP</b>'
+            '</span>', unsafe_allow_html=True,
+        )
+
+        agraph(nodes=agraph_nodes, edges=agraph_edges, config=config)
+
+    except ImportError:
+        pass
+
     st.caption("참고 기준: NIST AI RMF · MITRE ATLAS · OWASP LLM Top 10 · NIS AI보안 가이드북(2025.12)")
 
 # --- Tab 1: Knowledge Explorer ---
