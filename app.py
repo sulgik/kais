@@ -100,15 +100,12 @@ with st.sidebar:
 
 # --- Main area ---
 st.markdown("""
-<div style="padding: 8px 0 4px 0;">
-  <div style="font-size:2rem; font-weight:800; letter-spacing:-1px; color:#1a1a2e; line-height:1.1;">
+<div style="padding:16px 0 12px;">
+  <div style="font-size:2.2rem; font-weight:900; letter-spacing:-1.5px; color:#1a1a2e; line-height:1.15;">
     국가·공공기관 AI보안 어드바이저
   </div>
-  <div style="font-size:1.25rem; font-weight:400; color:#2f55a5; letter-spacing:1px; margin-top:4px;">
-    KAIS &mdash; K-AI Security Advisor
-  </div>
-  <div style="font-size:0.85rem; color:#888; margin-top:6px;">
-    NIS AI보안 가이드북(2025.12) 기반 &nbsp;·&nbsp; 안전한 AI시스템 도입·활용을 위한 보안 안내 시스템
+  <div style="font-size:1rem; font-weight:400; color:#2f55a5; letter-spacing:2px; margin-top:6px; text-transform:uppercase;">
+    KAIS — K-AI Security Advisor
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -126,93 +123,65 @@ tab_home, tab_explorer, tab_owasp, tab_incidents, tab_checklist, tab_mcp = st.ta
 
 # --- Tab 0: Home ---
 with tab_home:
-    stats = kg.summary()
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
-    # 소개 헤더
-    st.markdown("""
-<div style="background:linear-gradient(135deg,#1a1a2e 0%,#2f55a5 100%);
-            border-radius:12px; padding:32px 36px; color:#fff; margin-bottom:24px;">
-  <div style="font-size:1.5rem; font-weight:700; margin-bottom:8px;">
-    국가·공공기관을 위한 AI보안 지식 플랫폼
-  </div>
-  <div style="font-size:0.95rem; opacity:0.88; line-height:1.8;">
-    국가정보원(NIS) AI보안 가이드북을 기반으로 보안위협·대책·사고사례를 체계화한 지식그래프입니다.<br>
-    OWASP LLM Top 10, NIST AI RMF, MITRE ATLAS 등 국제 기준과 교차 매핑하여 실무에 바로 활용할 수 있습니다.
-  </div>
-</div>
-""", unsafe_allow_html=True)
-
-    # 통계 카드
-    c1, c2, c3, c4 = st.columns(4)
-    for col, label, value, color in [
-        (c1, "보안위협", f"{stats['total_threats']}개", "#ed1c24"),
-        (c2, "보안대책", f"{stats['total_measures']}개", "#2f55a5"),
-        (c3, "사고 사례", f"{len(incidents)}건", "#f58220"),
-        (c4, "위협↔대책 연결", f"{stats['total_links']}개", "#2a9d8f"),
-    ]:
-        col.markdown(f"""
-<div style="border:1px solid #e0e4f0; border-top:4px solid {color};
-            border-radius:8px; padding:16px 20px; text-align:center;">
-  <div style="font-size:1.6rem; font-weight:800; color:{color};">{value}</div>
-  <div style="font-size:0.8rem; color:#666; margin-top:2px;">{label}</div>
-</div>""", unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    col_nis, col_owasp = st.columns(2)
+    col_nis, col_owasp = st.columns(2, gap="large")
 
     with col_nis:
         st.markdown("""
-#### NIS AI보안 가이드북 (2025.12)
+<div style="border-left:4px solid #1a1a2e; padding-left:16px; margin-bottom:16px;">
+  <div style="font-size:1.05rem; font-weight:700; color:#1a1a2e;">NIS AI보안 가이드북</div>
+  <div style="font-size:0.8rem; color:#888;">국가정보원 · 2025년 12월</div>
+</div>
+""", unsafe_allow_html=True)
+        st.markdown("""
+국가정보원이 발간한 **국가·공공기관 AI시스템 보안 가이드북**입니다.
+생성형·에이전틱·피지컬 AI를 포괄하는 수명주기 전 단계의 보안위협과 대책을 정리한
+국내 최초의 공공 AI보안 기준서입니다.
 
-국가정보원이 발간한 **국가·공공기관 AI시스템 보안 가이드북**으로,
-생성형 AI·에이전틱 AI·피지컬 AI를 아우르는 AI 수명주기 전 단계의
-보안위협과 대책을 체계적으로 정리한 국내 최초의 공공 AI보안 기준입니다.
+**보안위협 (T01 ~ T15)**
+학습데이터 오염, 프롬프트 인젝션, 회피 공격, 공급망 공격 등
+AI시스템에 특화된 15개 위협 유형을 정의합니다.
 
-**주요 구성**
-- **보안위협 T01~T15**: 학습데이터 오염, 프롬프트 인젝션, 공급망 공격 등 15개 위협 유형
-- **보안대책 M01~M30**: 공통·에이전틱(A-M)·피지컬(P-M) 영역별 대책
-- **구축유형별 중점 대책**: 내부망 전용 / 외부망 연계 / 대민서비스 / 상용 AI서비스
-- **수명주기**: 데이터 수집 → 학습 → 구축 → 운영 → 폐기 전 단계 커버
+**보안대책 (M01 ~ M30 · A-M · P-M)**
+공통 대책 외에 에이전틱 AI(A-M), 피지컬 AI(P-M) 전용 대책을 별도 제시합니다.
+
+**구축유형별 가이드**
+내부망 전용 / 외부망 연계 / 대민서비스 / 상용 AI서비스
+각 환경에 맞는 중점 위협과 우선 적용 대책을 안내합니다.
 """)
-        st.link_button("가이드북 원문 (NIS)", "https://www.nis.go.kr", use_container_width=True)
+        st.link_button("원문 보기 — nis.go.kr", "https://www.nis.go.kr", use_container_width=True)
 
     with col_owasp:
         st.markdown("""
-#### OWASP Top 10 for LLM Applications (2025)
+<div style="border-left:4px solid #f58220; padding-left:16px; margin-bottom:16px;">
+  <div style="font-size:1.05rem; font-weight:700; color:#1a1a2e;">OWASP Top 10 for LLM Applications</div>
+  <div style="font-size:0.8rem; color:#888;">Open Worldwide Application Security Project · 2025</div>
+</div>
+""", unsafe_allow_html=True)
+        st.markdown("""
+**OWASP**가 선정한 LLM 애플리케이션의 10대 취약점으로,
+전 세계 AI 보안 실무의 사실상 표준입니다.
 
-**OWASP(Open Worldwide Application Security Project)**가 선정한
-LLM 애플리케이션 10대 취약점으로, 전 세계 AI 보안의 사실상 표준입니다.
+| ID | 취약점 |
+|----|--------|
+| LLM01 | 프롬프트 인젝션 |
+| LLM02 | 민감 정보 노출 |
+| LLM03 | 공급망 취약점 |
+| LLM04 | 데이터·모델 오염 |
+| LLM05 | 부적절한 출력 처리 |
+| LLM06 | 과도한 권한 위임 |
+| LLM07 | 시스템 프롬프트 유출 |
+| LLM08 | 벡터·임베딩 취약점 |
+| LLM09 | 허위 정보 생성 |
+| LLM10 | 무제한 리소스 소비 |
 
-**10대 취약점 요약**
-- **LLM01** 프롬프트 인젝션 &nbsp;·&nbsp; **LLM02** 민감 정보 노출
-- **LLM03** 공급망 취약점 &nbsp;·&nbsp; **LLM04** 데이터·모델 오염
-- **LLM05** 부적절한 출력 처리 &nbsp;·&nbsp; **LLM06** 과도한 권한 위임
-- **LLM07** 시스템 프롬프트 유출 &nbsp;·&nbsp; **LLM08** 벡터·임베딩 취약점
-- **LLM09** 허위 정보 생성 &nbsp;·&nbsp; **LLM10** 무제한 리소스 소비
-
-NIS 가이드북의 위협·대책과 **양방향 교차 매핑**을 제공합니다.
+본 시스템에서 NIS 가이드북 위협·대책과 **양방향 교차 매핑**을 제공합니다.
 """)
-        st.link_button("OWASP LLM Top 10 원문", "https://genai.owasp.org/", use_container_width=True)
+        st.link_button("원문 보기 — genai.owasp.org", "https://genai.owasp.org/", use_container_width=True)
 
     st.divider()
-
-    # 메뉴 안내
-    st.markdown("#### 메뉴 안내")
-    g1, g2, g3, g4, g5 = st.columns(5)
-    for col, icon, name, desc in [
-        (g1, "🔍", "지식 탐색",   "위협·대책 전체 목록과 상세 내용, 상호 연결 관계 탐색"),
-        (g2, "🌐", "OWASP",       "LLM Top 10 항목과 NIS 가이드북 교차 매핑"),
-        (g3, "🔥", "사고 사례",   "실제 발생한 AI 보안 사고 16건 상세 분석"),
-        (g4, "✅", "체크리스트",  "구축유형·AI유형 선택 → 맞춤 체크리스트 HTML 생성"),
-        (g5, "🔌", "MCP 연결",    "Claude와 연결해 자연어로 AI보안 질문"),
-    ]:
-        col.markdown(f"""
-<div style="border:1px solid #e8eaf0; border-radius:8px; padding:14px 12px; height:110px;">
-  <div style="font-size:1.4rem;">{icon}</div>
-  <div style="font-weight:700; font-size:0.85rem; margin:4px 0 4px;">{name}</div>
-  <div style="font-size:0.75rem; color:#666; line-height:1.4;">{desc}</div>
-</div>""", unsafe_allow_html=True)
+    st.caption("참고 기준: NIST AI RMF · MITRE ATLAS · OWASP LLM Top 10 · NIS AI보안 가이드북(2025.12)")
 
 # --- Tab 1: Knowledge Explorer ---
 with tab_explorer:
