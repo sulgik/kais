@@ -313,16 +313,17 @@ with tab_trinity:
 
         config = Config(
             width="100%",
-            height=800,
+            height=900,
             directed=False,
             physics={
                 "enabled": True,
-                "stabilization": {"enabled": True, "iterations": 250, "fit": True},
+                "stabilization": {"enabled": True, "iterations": 300, "fit": True},
                 "barnesHut": {
-                    "gravitationalConstant": -5000,
-                    "springLength": 180,
-                    "springConstant": 0.02,
-                    "damping": 0.5,
+                    "gravitationalConstant": -12000,
+                    "centralGravity": 0.1,
+                    "springLength": 300,
+                    "springConstant": 0.01,
+                    "damping": 0.4,
                 },
             },
             hierarchical=False,
