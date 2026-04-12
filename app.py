@@ -315,27 +315,17 @@ with tab_trinity:
             width="100%",
             height=800,
             directed=False,
-            physics=True,
-            hierarchical=False,
-            nodeHighlightBehavior=True,
-            highlightColor="#ffee00",
-            collapsible=False,
-            backgroundColor="#ffffff",
-            node={"highlightStrokeColor": "#333"},
-            link={"highlightColor": "#aaa"},
-            **{
-                "physics": {
-                    "enabled": True,
-                    "stabilization": {"enabled": True, "iterations": 200, "fit": True},
-                    "barnesHut": {
-                        "gravitationalConstant": -5000,
-                        "springLength": 180,
-                        "springConstant": 0.02,
-                        "damping": 0.5,
-                    },
+            physics={
+                "enabled": True,
+                "stabilization": {"enabled": True, "iterations": 250, "fit": True},
+                "barnesHut": {
+                    "gravitationalConstant": -5000,
+                    "springLength": 180,
+                    "springConstant": 0.02,
+                    "damping": 0.5,
                 },
-                "interaction": {"zoomView": True, "dragView": True},
             },
+            hierarchical=False,
         )
 
         # Legend
