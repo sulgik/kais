@@ -176,7 +176,7 @@ with tab_incidents:
     st.subheader("AI 보안 사고 사례")
     st.caption("NIS AI보안 가이드북에 수록된 실제 사고/공격 사례")
 
-    if kg.incidents:
+    if getattr(kg, "incidents", None):
         for inc in kg.incidents:
             threat_ids = inc.get("threat_ids", [])
             year = inc.get("year", "")
