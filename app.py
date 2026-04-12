@@ -31,6 +31,10 @@ kg = load_kg()
 image_index = load_image_index()
 IMAGE_DIR = Path(__file__).parent / "data" / "images"
 
+# Load incidents directly (not via cached kg to avoid stale cache issues)
+_incidents_path = Path(__file__).parent / "data" / "incidents.json"
+incidents = json.loads(_incidents_path.read_text(encoding="utf-8")) if _incidents_path.exists() else []
+
 
 # --- Badge helpers ---
 def _t_badge(tid: str) -> str:
@@ -176,8 +180,8 @@ with tab_incidents:
     st.subheader("AI 보안 사고 사례")
     st.caption("NIS AI보안 가이드북에 수록된 실제 사고/공격 사례")
 
-    if getattr(kg, "incidents", None):
-        for inc in kg.incidents:
+    if incidents:
+        for inc in incidents:
             threat_ids = inc.get("threat_ids", [])
             year = inc.get("year", "")
             year_str = f" ({year})" if year else ""
