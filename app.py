@@ -414,6 +414,9 @@ with tab_trinity:
         labels = []
         label_idx = {}
 
+        def _strip_ai(s):
+            return s.replace('AI ', '').replace('AI', '')
+
         def _get_idx(label):
             if label not in label_idx:
                 label_idx[label] = len(labels)
@@ -428,8 +431,8 @@ with tab_trinity:
                 t = kg.get_threat(link["threat_id"])
                 m = kg.get_measure(link["measure_id"])
                 if t and m:
-                    src_label = f"{t['id']} {t['name']}"
-                    tgt_label = f"{m['id']} {m['name']}"
+                    src_label = f"{t['id']} {_strip_ai(t['name'])}"
+                    tgt_label = f"{m['id']} {_strip_ai(m['name'])}"
                     sources.append(_get_idx(src_label))
                     targets.append(_get_idx(tgt_label))
                     values.append(1)
@@ -441,11 +444,11 @@ with tab_trinity:
                 tech = kg.get_atlas_technique(am["atlas_id"])
                 if not tech:
                     continue
-                src_label = f"{tech['id']} {tech['name_ko']}"
+                src_label = f"{tech['id']} {_strip_ai(tech['name_ko'])}"
                 for oid in am.get("owasp_ids", []):
                     o = kg.get_owasp(oid)
                     if o:
-                        tgt_label = f"{o['id']} {o['name_ko']}"
+                        tgt_label = f"{o['id']} {_strip_ai(o['name_ko'])}"
                         sources.append(_get_idx(src_label))
                         targets.append(_get_idx(tgt_label))
                         values.append(2)
@@ -457,11 +460,11 @@ with tab_trinity:
                 o = kg.get_owasp(om["owasp_id"])
                 if not o:
                     continue
-                src_label = f"{o['id']} {o['name_ko']}"
+                src_label = f"{o['id']} {_strip_ai(o['name_ko'])}"
                 for tid in om.get("threat_ids", []):
                     t = kg.get_threat(tid)
                     if t:
-                        tgt_label = f"{t['id']} {t['name']}"
+                        tgt_label = f"{t['id']} {_strip_ai(t['name'])}"
                         sources.append(_get_idx(src_label))
                         targets.append(_get_idx(tgt_label))
                         values.append(1)
@@ -500,7 +503,7 @@ with tab_trinity:
                 title=dict(text=sankey_title, font=dict(size=14)),
                 height=800,
                 margin=dict(l=10, r=10, t=40, b=10),
-                font=dict(size=11, color="#333"),
+                font=dict(size=11, color="#000000"),
             )
             st.plotly_chart(fig, use_container_width=True)
         else:

@@ -272,19 +272,22 @@ class SecurityKnowledgeGraph:
         # NIS Threats
         if show_nis:
             for t in self.threats:
-                _add_node(t["id"], f"{t['id']}\n{t['name']}", "#ed1c24", "dot", 25, "NIS Threat", t["name"])
+                short = t['name'].replace('AI ', '').replace('AI', '')
+                _add_node(t["id"], f"{t['id']}\n{short}", "#ed1c24", "dot", 25, "NIS Threat", t["name"])
 
         # OWASP
         if show_owasp:
             for o in self.owasp:
-                _add_node(o["id"], f"{o['id']}\n{o['name_ko']}", "#f58220", "square", 22, "OWASP", o["name"])
+                short = o['name_ko'].replace('AI ', '').replace('AI', '')
+                _add_node(o["id"], f"{o['id']}\n{short}", "#f58220", "square", 22, "OWASP", o["name"])
 
         # ATLAS Techniques (only mapped ones)
         if show_atlas:
             for am in self._atlas_mapping:
                 tech = self._atlas_tech_by_id.get(am["atlas_id"])
                 if tech:
-                    _add_node(tech["id"], f"{tech['id']}\n{tech['name_ko']}", "#7b2d8e", "triangle", 20, "ATLAS", tech["name"])
+                    short = tech['name_ko'].replace('AI ', '').replace('AI', '')
+                    _add_node(tech["id"], f"{tech['id']}\n{short}", "#7b2d8e", "triangle", 20, "ATLAS", tech["name"])
 
         # NIS Measures (optional, can be noisy)
         if show_measures and show_nis:
