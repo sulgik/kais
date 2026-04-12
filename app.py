@@ -305,6 +305,7 @@ with tab_trinity:
             agraph_nodes.append(Node(
                 id=n["id"], label=n["label"], color=n["color"],
                 shape=n["shape"], size=n["size"], title=n["title"],
+                font={"color": "#333333", "size": 12},
             ))
         agraph_edges = []
         for e in graph_data["edges"]:
@@ -324,6 +325,7 @@ with tab_trinity:
             collapsible=False,
             node={"highlightStrokeColor": "blue"},
             link={"highlightColor": "lightblue"},
+            backgroundColor="#ffffff",
         )
 
         # Two-column layout: graph + detail
