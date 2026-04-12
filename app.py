@@ -291,7 +291,7 @@ with tab_incidents:
                 if img_key and img_key in image_index:
                     img_path = IMAGE_DIR / image_index[img_key]
                     if img_path.exists():
-                        st.image(str(img_path), use_container_width=True)
+                        st.image(str(img_path), width=500)
     else:
         st.info("사고 사례 데이터가 없습니다.")
 
