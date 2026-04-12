@@ -7,7 +7,6 @@ import re
 from pathlib import Path
 import streamlit as st
 from knowledge_graph import SecurityKnowledgeGraph
-from advisor import advise, build_context
 
 st.set_page_config(
     page_title="KAIS - 국가·공공기관 AI보안 어드바이저",
@@ -82,9 +81,6 @@ def show_threat_image(threat_id: str):
 with st.sidebar:
     st.title("⚙️ 설정")
 
-    api_key = st.text_input("Anthropic API Key", type="password", help="Claude API 키를 입력하세요")
-
-    st.divider()
     st.subheader("🎯 컨텍스트 필터")
 
     build_type = st.selectbox(
@@ -129,16 +125,14 @@ st.warning(
     """**⚠️ 실험적 서비스 안내 (Experimental)**
 
 - 본 서비스는 연구·교육 목적의 **비공식 실험 서비스**이며, 국가정보원(NIS)과 무관합니다.
-- AI 보안을 안내하는 서비스이지만, **본 서비스 자체도 보안 취약점을 가질 수 있습니다.** 민감한 기관 정보나 업무 데이터를 입력하지 마세요.
-- 입력한 질문은 Anthropic Claude API를 통해 처리됩니다. 본인의 API 키와 입력 내용에 대한 책임은 사용자에게 있습니다.
 - 답변은 NIS AI보안 가이드북(2025.12)을 기반으로 생성되며, 공식 보안 검토를 대체하지 않습니다.
 """,
     icon="⚠️",
 )
 
 # --- Tabs ---
-tab_explorer, tab_owasp, tab_incidents, tab_checklist, tab_advisor = st.tabs(
-    ["🔍 지식 탐색", "🌐 OWASP LLM Top 10", "🔥 사고 사례", "✅ 체크리스트", "💬 어드바이저"]
+tab_explorer, tab_owasp, tab_incidents, tab_checklist, tab_mcp = st.tabs(
+    ["🔍 지식 탐색", "🌐 OWASP LLM Top 10", "🔥 사고 사례", "✅ 체크리스트", "🔌 MCP 연결"]
 )
 
 # --- Tab 1: Knowledge Explorer ---
@@ -295,38 +289,72 @@ with tab_checklist:
             else:
                 st.checkbox(f"**{m['id']}** {m['name']}", key=f"check_{m['id']}")
 
-# --- Tab 4: Advisor (Chat) ---
-with tab_advisor:
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+# --- Tab 5: MCP 연결 안내 ---
+with tab_mcp:
+    st.subheader("🔌 AI 어드바이저와 대화하기 — MCP 연결")
+    st.markdown(
+        """
+KAIS 지식그래프를 Claude와 연결하면, **자연어로 AI 보안 질문**을 할 수 있습니다.
+API 키를 여기에 입력할 필요 없이, 본인의 Claude 환경에서 바로 사용합니다.
 
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+---
 
-    if prompt := st.chat_input("AI 보안에 대해 질문하세요 (예: 에이전틱 AI 도입 시 주의사항은?)"):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+#### 방법 1: `uvx`로 바로 실행 (추천)
 
-        if not api_key:
-            with st.chat_message("assistant"):
-                st.warning("사이드바에서 Anthropic API Key를 입력해주세요.")
-            st.session_state.messages.append({"role": "assistant", "content": "⚠️ API Key가 필요합니다."})
-        else:
-            with st.chat_message("assistant"):
-                with st.spinner("NIS 가이드북을 기반으로 답변 생성 중..."):
-                    bt = None if build_type == "전체" else build_type
-                    at = None if ai_type == "전체" else ai_type
-                    lc = None if lifecycle == "전체" else lifecycle
+```json
+// ~/.claude/settings.json 또는 Claude Desktop 설정
+{
+  "mcpServers": {
+    "kais": {
+      "command": "uvx",
+      "args": ["kais-mcp"]
+    }
+  }
+}
+```
 
-                    response = advise(
-                        user_query=prompt,
-                        kg=kg,
-                        build_type=bt,
-                        ai_type=at,
-                        lifecycle=lc,
-                        api_key=api_key,
-                    )
-                    st.markdown(response)
-            st.session_state.messages.append({"role": "assistant", "content": response})
+#### 방법 2: 소스에서 직접 실행
+
+```bash
+git clone https://github.com/your-org/kais.git
+cd kais
+pip install -e .
+```
+
+```json
+{
+  "mcpServers": {
+    "kais": {
+      "command": "python",
+      "args": ["/path/to/kais/server.py"]
+    }
+  }
+}
+```
+
+---
+
+#### 사용 가능한 도구
+
+| 도구 | 설명 |
+|------|------|
+| `query_by_context` | 구축유형·AI유형·수명주기로 위협·대책 조회 |
+| `get_threat` | T## ID로 위협 상세 조회 |
+| `get_measure` | M## ID로 대책 상세 조회 |
+| `search_threats` | 키워드로 위협 검색 |
+| `search_measures` | 키워드로 대책 검색 |
+| `list_incidents` | 보안 사고 사례 조회 |
+| `get_owasp_mapping` | OWASP LLM Top 10 ↔ NIS 매핑 조회 |
+| `summary` | 지식그래프 통계 |
+
+---
+
+#### 예시 질문
+
+> "우리 기관에서 생성형 AI 챗봇을 대민서비스로 도입하려고 합니다. 가장 주의해야 할 보안위협과 대책은?"
+
+> "에이전틱 AI에서 tool poisoning 관련 보안위협과 대책을 알려줘"
+
+> "OWASP LLM01과 대응되는 NIS 가이드북 항목은?"
+""",
+    )

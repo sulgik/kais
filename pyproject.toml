@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kais-mcp"
+version = "0.1.0"
+description = "KAIS — NIS AI보안 가이드북 지식그래프 MCP 서버"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp[cli]>=1.0.0",
+]
+
+[project.scripts]
+kais-mcp = "server:mcp.run"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+include = [
+    "server.py",
+    "knowledge_graph.py",
+    "schema.py",
+    "data/**/*.json",
+    "data/images/**",
+]
