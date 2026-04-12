@@ -35,6 +35,13 @@ IMAGE_DIR = Path(__file__).parent / "data" / "images"
 _incidents_path = Path(__file__).parent / "data" / "incidents.json"
 incidents = json.loads(_incidents_path.read_text(encoding="utf-8")) if _incidents_path.exists() else []
 
+# Load OWASP data directly
+_owasp_path = Path(__file__).parent / "data" / "owasp_llm.json"
+owasp_items = json.loads(_owasp_path.read_text(encoding="utf-8")) if _owasp_path.exists() else []
+_owasp_map_path = Path(__file__).parent / "data" / "owasp_nis_mapping.json"
+owasp_mapping = json.loads(_owasp_map_path.read_text(encoding="utf-8")) if _owasp_map_path.exists() else []
+owasp_map_by_id = {m["owasp_id"]: m for m in owasp_mapping}
+
 
 # --- Badge helpers ---
 def _t_badge(tid: str) -> str:
@@ -43,14 +50,19 @@ def _t_badge(tid: str) -> str:
 def _m_badge(mid: str) -> str:
     return f'<span style="background:#2f55a5;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:0.85em;white-space:nowrap;">{mid}</span>'
 
-_BADGE_PATTERN = re.compile(r'\b(T\d{2}|M\d{2}|A-M\d{2}|P-M\d{2})\b')
+def _owasp_badge(oid: str) -> str:
+    return f'<span style="background:#f58220;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:0.85em;white-space:nowrap;">{oid}</span>'
+
+_BADGE_PATTERN = re.compile(r'\b(LLM\d{2}|T\d{2}|M\d{2}|A-M\d{2}|P-M\d{2})\b')
 
 def badged(text: str) -> str:
-    '''Replace all T##, M##, A-M##, P-M## in text with colored HTML badges.'''
+    '''Replace all LLM##, T##, M##, A-M##, P-M## in text with colored HTML badges.'''
     def _repl(m):
         token = m.group(1)
         if token.startswith("T"):
             return _t_badge(token)
+        if token.startswith("LLM"):
+            return _owasp_badge(token)
         return _m_badge(token)
     return _BADGE_PATTERN.sub(_repl, text)
 
@@ -125,8 +137,8 @@ st.warning(
 )
 
 # --- Tabs ---
-tab_explorer, tab_incidents, tab_checklist, tab_advisor = st.tabs(
-    ["🔍 지식 탐색", "🔥 사고 사례", "✅ 체크리스트", "💬 어드바이저"]
+tab_explorer, tab_owasp, tab_incidents, tab_checklist, tab_advisor = st.tabs(
+    ["🔍 지식 탐색", "🌐 OWASP LLM Top 10", "🔥 사고 사례", "✅ 체크리스트", "💬 어드바이저"]
 )
 
 # --- Tab 1: Knowledge Explorer ---
@@ -151,6 +163,11 @@ with tab_explorer:
                 if related_measures:
                     badges = " ".join(_m_badge(m["id"]) for m in related_measures)
                     st.markdown(f"**대응 대책:** {badges}", unsafe_allow_html=True)
+                # OWASP cross-reference
+                related_owasp = [o for o in owasp_mapping if t["id"] in o.get("threat_ids", [])]
+                if related_owasp:
+                    badges = " ".join(_owasp_badge(o["owasp_id"]) for o in related_owasp)
+                    st.markdown(f"**OWASP 연결:** {badges}", unsafe_allow_html=True)
 
     with col2:
         st.subheader("보안대책 (M01~M30)")
@@ -175,7 +192,41 @@ with tab_explorer:
                     badges = " ".join(_t_badge(t["id"]) for t in related_threats)
                     st.markdown(f"**대응 위협:** {badges}", unsafe_allow_html=True)
 
-# --- Tab 2: Incidents ---
+# --- Tab 2: OWASP LLM Top 10 ---
+with tab_owasp:
+    st.subheader("OWASP Top 10 for LLM Applications (2025)")
+    st.caption("각 항목과 NIS AI보안 가이드북의 대응 위협·대책을 교차 매핑합니다.")
+
+    for o in owasp_items:
+        mapping = owasp_map_by_id.get(o["id"], {})
+        with st.expander(f"**{o['id']}** {o['name']} — {o['name_ko']}"):
+            st.markdown(f"{_owasp_badge(o['id'])} **{o['name']}** ({o['name_ko']})", unsafe_allow_html=True)
+            st.markdown(o["description"])
+            if o.get("examples"):
+                st.markdown("**공격 시나리오:**")
+                for ex in o["examples"]:
+                    st.markdown(f"- {ex}")
+
+            st.divider()
+            st.markdown("##### NIS 가이드북 매핑")
+
+            # 매핑된 위협
+            threat_ids = mapping.get("threat_ids", [])
+            if threat_ids:
+                badges = " ".join(_t_badge(tid) for tid in threat_ids)
+                st.markdown(f"**대응 위협:** {badges}", unsafe_allow_html=True)
+                for tid in threat_ids:
+                    t = kg.get_threat(tid)
+                    if t:
+                        st.markdown(f"- {_t_badge(tid)} {t['name']}: {t['definition']}", unsafe_allow_html=True)
+
+            # 매핑된 대책
+            measure_ids = mapping.get("measure_ids", [])
+            if measure_ids:
+                badges = " ".join(_m_badge(mid) for mid in measure_ids)
+                st.markdown(f"**대응 대책:** {badges}", unsafe_allow_html=True)
+
+# --- Tab 3: Incidents ---
 with tab_incidents:
     st.subheader("AI 보안 사고 사례")
     st.caption("NIS AI보안 가이드북에 수록된 실제 사고/공격 사례")

@@ -1,0 +1,52 @@
+[
+  {
+    "owasp_id": "LLM01",
+    "threat_ids": ["T08", "T07", "T09"],
+    "measure_ids": ["M13", "M14", "M15", "M09", "M19", "M23", "M24", "M30"]
+  },
+  {
+    "owasp_id": "LLM02",
+    "threat_ids": ["T07", "T04", "T02"],
+    "measure_ids": ["M13", "M15", "M06", "M07", "M04", "M05", "M09", "M08", "M30"]
+  },
+  {
+    "owasp_id": "LLM03",
+    "threat_ids": ["T14", "T03", "T15", "T01"],
+    "measure_ids": ["M02", "M11", "M12", "M25", "M29", "M03", "M10"]
+  },
+  {
+    "owasp_id": "LLM04",
+    "threat_ids": ["T01", "T03", "T05"],
+    "measure_ids": ["M01", "M03", "M05", "M08", "M10", "M12", "M23", "M24", "M26"]
+  },
+  {
+    "owasp_id": "LLM05",
+    "threat_ids": ["T08", "T10", "T13"],
+    "measure_ids": ["M13", "M14", "M15", "M17", "M19", "M09", "M25"]
+  },
+  {
+    "owasp_id": "LLM06",
+    "threat_ids": ["T13", "T08", "T07"],
+    "measure_ids": ["M19", "M20", "M09", "M15", "M11", "M30"]
+  },
+  {
+    "owasp_id": "LLM07",
+    "threat_ids": ["T07", "T08", "T13"],
+    "measure_ids": ["M13", "M15", "M16", "M19", "M09", "M04"]
+  },
+  {
+    "owasp_id": "LLM08",
+    "threat_ids": ["T01", "T05", "T08", "T04"],
+    "measure_ids": ["M03", "M05", "M08", "M13", "M17", "M12", "M04"]
+  },
+  {
+    "owasp_id": "LLM09",
+    "threat_ids": ["T12", "T09", "T01"],
+    "measure_ids": ["M22", "M09", "M15", "M23", "M30", "M03"]
+  },
+  {
+    "owasp_id": "LLM10",
+    "threat_ids": ["T11", "T06", "T12"],
+    "measure_ids": ["M27", "M14", "M09", "M17", "M21", "M16"]
+  }
+]

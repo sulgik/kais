@@ -17,6 +17,14 @@ class SecurityKnowledgeGraph:
         incidents_path = data_dir / "incidents.json"
         self.incidents = self._load(incidents_path) if incidents_path.exists() else []
 
+        # OWASP LLM Top 10
+        owasp_path = data_dir / "owasp_llm.json"
+        self.owasp = self._load(owasp_path) if owasp_path.exists() else []
+        owasp_map_path = data_dir / "owasp_nis_mapping.json"
+        self._owasp_mapping = self._load(owasp_map_path) if owasp_map_path.exists() else []
+        self._owasp_by_id = {o["id"]: o for o in self.owasp}
+        self._owasp_map_by_id = {m["owasp_id"]: m for m in self._owasp_mapping}
+
         # Index for fast lookup
         self._threat_by_id = {t["id"]: t for t in self.threats}
         self._measure_by_id = {m["id"]: m for m in self.measures}
@@ -131,6 +139,28 @@ class SecurityKnowledgeGraph:
                 "lifecycle": lifecycle,
             }
         }
+
+    # === OWASP queries ===
+    def get_owasp(self, owasp_id: str) -> dict | None:
+        return self._owasp_by_id.get(owasp_id)
+
+    def get_nis_for_owasp(self, owasp_id: str) -> dict:
+        mapping = self._owasp_map_by_id.get(owasp_id, {})
+        threat_ids = mapping.get("threat_ids", [])
+        measure_ids = mapping.get("measure_ids", [])
+        return {
+            "threats": [self._threat_by_id[tid] for tid in threat_ids if tid in self._threat_by_id],
+            "measures": [self._measure_by_id[mid] for mid in measure_ids if mid in self._measure_by_id],
+        }
+
+    def get_owasp_for_threat(self, threat_id: str) -> list[dict]:
+        result = []
+        for m in self._owasp_mapping:
+            if threat_id in m.get("threat_ids", []):
+                owasp = self._owasp_by_id.get(m["owasp_id"])
+                if owasp:
+                    result.append(owasp)
+        return result
 
     # === Summary stats ===
     def summary(self) -> dict:

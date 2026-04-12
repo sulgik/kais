@@ -1,0 +1,134 @@
+[
+  {
+    "id": "LLM01",
+    "name": "Prompt Injection",
+    "name_ko": "프롬프트 인젝션",
+    "description": "A vulnerability where user prompts or external content alter an LLM's behavior or output in unintended ways. It manifests as direct injection (user input manipulating model behavior) or indirect injection (external sources like websites or files containing hidden instructions). Successful attacks can lead to sensitive information disclosure, unauthorized function access, and manipulation of critical decisions.",
+    "examples": [
+      "Direct injection: attacker manipulates a support chatbot to ignore guidelines, query private data stores, and send emails",
+      "Indirect injection: hidden instructions in webpages cause LLM to exfiltrate private conversation data via image URL",
+      "Unintentional injection: resume optimization tool triggers AI-detection instructions embedded in job descriptions",
+      "Malicious document modifications in RAG repositories alter the LLM's output to generate misleading results",
+      "Payload splitting: fragmented malicious prompts in resumes combine to produce positive recommendations despite actual content",
+      "Multimodal injection: malicious prompt within an image combined with text alters model behavior",
+      "Adversarial suffix: meaningless character strings appended to prompts influence the LLM's output maliciously",
+      "Multilingual/obfuscated attack: encoded instructions using multiple languages or Base64 bypass content filters"
+    ]
+  },
+  {
+    "id": "LLM02",
+    "name": "Sensitive Information Disclosure",
+    "name_ko": "민감 정보 노출",
+    "description": "LLMs may expose sensitive data including PII, financial details, health records, business secrets, and security credentials through their outputs. Risk factors include inadequate data sanitization, improper access controls, and the potential for attackers to extract training data through prompt injection or model inversion techniques. System restrictions may not always be honored and could be bypassed.",
+    "examples": [
+      "Unintentional exposure of another user's personal data due to insufficient sanitization",
+      "Targeted prompt injection to bypass input filters and extract confidential information",
+      "Sensitive data inadvertently included in training processes later disclosed in model outputs"
+    ]
+  },
+  {
+    "id": "LLM03",
+    "name": "Supply Chain",
+    "name_ko": "공급망 취약점",
+    "description": "LLM supply chains face vulnerabilities affecting the integrity of training data, models, and deployment platforms. Risks include biased outputs, security breaches, and system failures through tampering or poisoning of third-party pre-trained models and data. The emergence of open-access LLMs, fine-tuning methods like LoRA, and on-device deployment increases the attack surface.",
+    "examples": [
+      "Malware in compromised Python dependencies targeting model development environments",
+      "Direct model parameter manipulation to bypass safety features and spread misinformation",
+      "Fine-tuned models designed to pass safety benchmarks while containing hidden targeted vulnerabilities",
+      "Malicious LoRA adapters merged into production models through supplier infiltration",
+      "Fake versions of popular models published with embedded malware and backdoors",
+      "Reverse-engineered mobile applications with tampered models redirecting users to fraudulent sites",
+      "Dataset poisoning to create backdoors favoring specific entities during fine-tuning",
+      "CloudBorne and CloudJacking attacks exploiting cloud infrastructure vulnerabilities"
+    ]
+  },
+  {
+    "id": "LLM04",
+    "name": "Data and Model Poisoning",
+    "name_ko": "데이터 및 모델 오염",
+    "description": "Data poisoning involves manipulating training, fine-tuning, or embedding data to introduce vulnerabilities, backdoors, or biases into LLMs. This compromises model security and ethical behavior, potentially leading to harmful outputs, degraded performance, or exploited downstream systems. As an integrity attack, poisoning particularly threatens models trained on unverified external data sources or distributed through shared repositories.",
+    "examples": [
+      "Attackers inject biased or malicious data during training to skew model outputs toward spreading misinformation",
+      "Toxic, unfiltered training data produces harmful or biased outputs that propagate dangerous information",
+      "Falsified documents inserted by competitors cause models to generate inaccurate information",
+      "Backdoor triggers embedded in training data enable authentication bypass or data exfiltration",
+      "Prompt injection techniques combined with poisoning allow attackers to compromise model outputs"
+    ]
+  },
+  {
+    "id": "LLM05",
+    "name": "Improper Output Handling",
+    "name_ko": "부적절한 출력 처리",
+    "description": "Insufficient validation, sanitization, and handling of the outputs generated by LLMs before they are passed downstream to other components and systems. Since LLM output can be influenced through prompts, users gain indirect access to system functions. Exploitation can lead to XSS, CSRF, SSRF, privilege escalation, and remote code execution.",
+    "examples": [
+      "LLM output executed directly in system shells or eval functions causes remote code execution",
+      "LLM-generated JavaScript or Markdown rendered in browsers triggers XSS attacks",
+      "Unsanitized LLM-generated SQL queries enable SQL injection attacks",
+      "LLM output used in file paths without sanitization creates path traversal vulnerabilities",
+      "LLM content in email templates without escaping enables phishing attacks",
+      "LLM generates malicious code or hallucinates malware-infected packages that developers use"
+    ]
+  },
+  {
+    "id": "LLM06",
+    "name": "Excessive Agency",
+    "name_ko": "과도한 권한 위임",
+    "description": "LLM-based systems are granted too much functionality, permission, or autonomy to call functions or extensions. This enables damaging actions through unexpected or manipulated LLM outputs, whether caused by hallucination, prompt injection, or malicious actors, affecting confidentiality, integrity, and availability.",
+    "examples": [
+      "Email summarization extension with send capabilities exploited via indirect prompt injection to forward sensitive inbox contents to attackers",
+      "LLM agent accessing a product database with unnecessary UPDATE/INSERT/DELETE permissions beyond required read-only scope",
+      "Shell command extension failing to restrict execution to one specific command, allowing arbitrary command execution",
+      "Document deletion feature performing operations without user confirmation or verification",
+      "Abandoned development plugin remaining available to the agent despite no longer being needed",
+      "Mail-reading OAuth session authenticated with broader permissions than necessary"
+    ]
+  },
+  {
+    "id": "LLM07",
+    "name": "System Prompt Leakage",
+    "name_ko": "시스템 프롬프트 유출",
+    "description": "System prompts guiding LLM behavior may inadvertently contain sensitive information not intended for discovery. The core security issue is not the prompt disclosure itself, but rather underlying problems such as sensitive data exposure, security control bypass, or improper privilege separation that the leaked information enables.",
+    "examples": [
+      "Attackers extract credentials embedded in system prompts and leverage them for unauthorized access to connected tools or systems",
+      "Attackers extract filtering rules from system prompts, then use prompt injection techniques to bypass content restrictions",
+      "Attackers discover role-based access structures revealed in system prompts and identify privilege escalation opportunities"
+    ]
+  },
+  {
+    "id": "LLM08",
+    "name": "Vector and Embedding Weaknesses",
+    "name_ko": "벡터 및 임베딩 취약점",
+    "description": "Vulnerabilities in systems utilizing Retrieval Augmented Generation (RAG) with LLMs, where weaknesses can be leveraged to inject harmful content, manipulate outputs, or expose confidential information. Risks stem from inadequate security in how embeddings are generated, maintained, and retrieved from vector databases.",
+    "examples": [
+      "Data poisoning via concealed malicious instructions (hidden text) embedded in documents submitted to RAG systems",
+      "Unauthorized cross-tenant access: sensitive embeddings from one user group retrieved for another in shared vector database environments",
+      "Behavioral degradation: RAG integration causing unintended shifts in model behavior",
+      "Embedding inversion: attackers reverse-engineer embeddings to recover original source information"
+    ]
+  },
+  {
+    "id": "LLM09",
+    "name": "Misinformation",
+    "name_ko": "허위 정보 생성",
+    "description": "LLMs generate false or misleading information that appears credible. The primary cause is hallucination, where models fabricate content by filling training data gaps with statistical patterns, though biases and incomplete information also contribute. Overreliance compounds the risk when users fail to verify LLM outputs before integrating them into critical decisions.",
+    "examples": [
+      "Attackers identify commonly hallucinated package names from coding assistants, then publish malicious packages with those names",
+      "Medical chatbots without sufficient accuracy safeguards produce poor health information that harms patients",
+      "LLMs generate fabricated legal cases or unsupported medical claims that users treat as credible"
+    ]
+  },
+  {
+    "id": "LLM10",
+    "name": "Unbounded Consumption",
+    "name_ko": "무제한 리소스 소비",
+    "description": "LLM applications permit excessive, uncontrolled inferences that expose systems to denial of service, financial losses, and intellectual property theft. The high computational demands of LLMs make them particularly susceptible to resource exploitation in cloud environments. Attackers exploit this by initiating high-volume operations or crafting resource-intensive queries.",
+    "examples": [
+      "Large input flooding causing memory exhaustion and system crashes",
+      "High-volume API requests depleting computational resources",
+      "Specially crafted complex queries triggering expensive processing routines",
+      "Exploiting pay-per-use models to generate unsustainable costs (Denial of Wallet)",
+      "Extracting model behavior through systematic API queries to replicate functionality",
+      "Bypassing input filters to conduct side-channel attacks and harvest model information"
+    ]
+  }
+]
