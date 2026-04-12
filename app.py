@@ -315,17 +315,7 @@ with tab_trinity:
             width="100%",
             height=900,
             directed=False,
-            physics={
-                "enabled": True,
-                "stabilization": {"enabled": True, "iterations": 300, "fit": True},
-                "barnesHut": {
-                    "gravitationalConstant": -8000,
-                    "centralGravity": 0.2,
-                    "springLength": 200,
-                    "springConstant": 0.08,
-                    "damping": 0.05,
-                },
-            },
+            physics=True,
             hierarchical=False,
         )
 
