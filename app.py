@@ -282,25 +282,18 @@ with tab_trinity:
         from streamlit_agraph import agraph, Node, Edge, Config
 
         # Filter controls — pair-based
-        filter_col1, filter_col2, filter_col3 = st.columns([2, 2, 3])
+        filter_col1, filter_col2 = st.columns(2)
         with filter_col1:
             show_nis_pair = st.checkbox("🔴 NIS 위협 + 🔵 대책", value=True, key="trinity_nis_pair",
                                         help="NIS 보안위협(T##)과 보안대책(M##)을 함께 표시")
         with filter_col2:
             show_ext_pair = st.checkbox("🟠 OWASP + 🟣 ATLAS 공격기법", value=True, key="trinity_ext_pair",
                                         help="OWASP LLM Top 10과 MITRE ATLAS 공격기법을 함께 표시")
-        with filter_col3:
-            show_measures = st.checkbox("대책 노드 표시 (복잡도 증가)", value=False, key="trinity_measures",
-                                        help="NIS 대책(M##) 노드를 그래프에 추가합니다")
 
-        show_nis = show_nis_pair
-        show_atlas = show_ext_pair
-        show_owasp = show_ext_pair
-
-        # Build graph data
+        # Build graph data — measures always shown when NIS pair is selected
         graph_data = kg.build_graph_data(
-            show_nis=show_nis, show_atlas=show_atlas,
-            show_owasp=show_owasp, show_measures=(show_measures and show_nis_pair),
+            show_nis=show_nis_pair, show_atlas=show_ext_pair,
+            show_owasp=show_ext_pair, show_measures=show_nis_pair,
         )
 
         # Convert to agraph objects
@@ -320,7 +313,7 @@ with tab_trinity:
 
         config = Config(
             width="100%",
-            height=750,
+            height=800,
             directed=False,
             physics=True,
             hierarchical=False,
@@ -330,6 +323,19 @@ with tab_trinity:
             backgroundColor="#ffffff",
             node={"highlightStrokeColor": "#333"},
             link={"highlightColor": "#aaa"},
+            **{
+                "physics": {
+                    "enabled": True,
+                    "stabilization": {"enabled": True, "iterations": 200, "fit": True},
+                    "barnesHut": {
+                        "gravitationalConstant": -5000,
+                        "springLength": 180,
+                        "springConstant": 0.02,
+                        "damping": 0.5,
+                    },
+                },
+                "interaction": {"zoomView": True, "dragView": True},
+            },
         )
 
         # Legend
