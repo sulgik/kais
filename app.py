@@ -3,13 +3,14 @@ KAIS - K-AI Security Advisor
 Streamlit Web UI
 """
 import json
+import re
 from pathlib import Path
 import streamlit as st
 from knowledge_graph import SecurityKnowledgeGraph
 from advisor import advise, build_context
 
 st.set_page_config(
-    page_title="KAIS - K-AI Security Advisor",
+    page_title="KAIS - 국가·공공기관 AI보안 어드바이저",
     page_icon="🛡️",
     layout="wide",
 )
@@ -31,19 +32,34 @@ image_index = load_image_index()
 IMAGE_DIR = Path(__file__).parent / "data" / "images"
 
 
+# --- Badge helpers ---
+def _t_badge(tid: str) -> str:
+    return f'<span style="background:#ed1c24;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:0.85em;white-space:nowrap;">{tid}</span>'
+
+def _m_badge(mid: str) -> str:
+    return f'<span style="background:#2f55a5;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:0.85em;white-space:nowrap;">{mid}</span>'
+
+_BADGE_PATTERN = re.compile(r'\b(T\d{2}|M\d{2}|A-M\d{2}|P-M\d{2})\b')
+
+def badged(text: str) -> str:
+    '''Replace all T##, M##, A-M##, P-M## in text with colored HTML badges.'''
+    def _repl(m):
+        token = m.group(1)
+        if token.startswith("T"):
+            return _t_badge(token)
+        return _m_badge(token)
+    return _BADGE_PATTERN.sub(_repl, text)
+
+def bmd(text: str):
+    '''st.markdown with badge support.'''
+    st.markdown(badged(text), unsafe_allow_html=True)
+
+
 def show_threat_image(threat_id: str):
     if threat_id in image_index:
         img_path = IMAGE_DIR / image_index[threat_id]
         if img_path.exists():
             st.image(str(img_path), use_container_width=True)
-
-
-def threat_badge(tid: str) -> str:
-    return f'<span style="background:#ed1c24;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:0.85em;">{tid}</span>'
-
-
-def measure_badge(mid: str) -> str:
-    return f'<span style="background:#2f55a5;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:0.85em;">{mid}</span>'
 
 
 # --- Sidebar ---
@@ -78,13 +94,20 @@ with st.sidebar:
     st.caption(f"📊 지식 그래프: {stats['total_threats']}개 위협 · {stats['total_measures']}개 대책 · {stats['total_links']}개 연결")
 
     st.divider()
+    st.markdown("📄 **관련 문서**")
+    st.markdown("- [NIS AI보안 가이드북 (2025.12)](https://www.nis.go.kr)")
+    st.markdown("- [OWASP Top 10 for LLM](https://genai.owasp.org/)")
+    st.markdown("- [NIST AI RMF](https://www.nist.gov/artificial-intelligence)")
+    st.markdown("- [MITRE ATLAS](https://atlas.mitre.org/)")
+
+    st.divider()
     st.caption("Made by [sulgik@gmail.com](mailto:sulgik@gmail.com)")
 
 
 # --- Main area ---
-st.title("🛡️ KAIS")
-st.markdown("**K-AI Security Advisor** — NIS AI보안 가이드북 기반 AI 보안 어드바이저")
-st.caption("국가·공공기관 AI시스템 도입·활용을 위한 보안 안내 시스템")
+st.markdown("## 🛡️ 국가·공공기관 AI보안 어드바이저")
+st.markdown("# KAIS — K-AI Security Advisor")
+st.caption("NIS AI보안 가이드북 기반 · 안전한 AI시스템 도입·활용을 위한 보안 안내 시스템")
 
 st.warning(
     """**⚠️ 실험적 서비스 안내 (Experimental)**
@@ -97,8 +120,10 @@ st.warning(
     icon="⚠️",
 )
 
-# --- Tabs: 지식탐색 + 체크리스트 앞, 어드바이저 뒤 ---
-tab_explorer, tab_checklist, tab_advisor = st.tabs(["🔍 지식 탐색", "✅ 체크리스트", "💬 어드바이저"])
+# --- Tabs ---
+tab_explorer, tab_incidents, tab_checklist, tab_advisor = st.tabs(
+    ["🔍 지식 탐색", "🔥 사고 사례", "✅ 체크리스트", "💬 어드바이저"]
+)
 
 # --- Tab 1: Knowledge Explorer ---
 with tab_explorer:
@@ -108,19 +133,19 @@ with tab_explorer:
         st.subheader("보안위협 (T01~T15)")
         for t in kg.threats:
             with st.expander(f"**{t['id']}** {t['name']}"):
-                st.markdown(f"{threat_badge(t['id'])} **{t['name']}**", unsafe_allow_html=True)
+                bmd(f"{t['id']} **{t['name']}**")
                 show_threat_image(t["id"])
-                st.markdown(f"**정의:** {t['definition']}")
-                st.markdown(f"**위협:** {t['risk']}")
+                bmd(f"**정의:** {t['definition']}")
+                bmd(f"**위협:** {t['risk']}")
                 if t.get("examples"):
                     st.markdown("**사례:**")
                     for ex in t["examples"]:
-                        st.markdown(f"- {ex}")
+                        bmd(f"- {ex}")
                 if t.get("lifecycles"):
                     st.markdown(f"**수명주기:** {', '.join(t['lifecycles'])}")
                 related_measures = kg.get_measures_for_threat(t["id"])
                 if related_measures:
-                    badges = " ".join(measure_badge(m["id"]) for m in related_measures)
+                    badges = " ".join(_m_badge(m["id"]) for m in related_measures)
                     st.markdown(f"**대응 대책:** {badges}", unsafe_allow_html=True)
 
     with col2:
@@ -134,19 +159,40 @@ with tab_explorer:
 
         for m in filtered_measures:
             with st.expander(f"**{m['id']}** {m['name']}"):
-                st.markdown(f"{measure_badge(m['id'])} **{m['name']}**", unsafe_allow_html=True)
-                st.markdown(m["description"])
+                bmd(f"{m['id']} **{m['name']}**")
+                bmd(m["description"])
                 if m.get("details"):
                     for d in m["details"]:
-                        st.markdown(f"- {d}")
+                        bmd(f"- {d}")
                 if m.get("checklist"):
                     st.info(f"📋 {m['checklist']}")
                 related_threats = kg.get_threats_for_measure(m["id"])
                 if related_threats:
-                    badges = " ".join(threat_badge(t["id"]) for t in related_threats)
+                    badges = " ".join(_t_badge(t["id"]) for t in related_threats)
                     st.markdown(f"**대응 위협:** {badges}", unsafe_allow_html=True)
 
-# --- Tab 2: Checklist Generator ---
+# --- Tab 2: Incidents ---
+with tab_incidents:
+    st.subheader("AI 보안 사고 사례")
+    st.caption("NIS AI보안 가이드북에 수록된 실제 사고/공격 사례")
+
+    if kg.incidents:
+        for inc in kg.incidents:
+            threat_ids = inc.get("threat_ids", [])
+            year = inc.get("year", "")
+            year_str = f" ({year})" if year else ""
+            with st.expander(f"**{inc['id']}** {inc['title']}{year_str}"):
+                # 관련 위협 배지
+                if threat_ids:
+                    badges = " ".join(_t_badge(tid) for tid in threat_ids)
+                    st.markdown(f"**관련 위협:** {badges}", unsafe_allow_html=True)
+                bmd(inc["description"])
+                if inc.get("source"):
+                    st.caption(f"출처: {inc['source']}")
+    else:
+        st.info("사고 사례 데이터가 없습니다.")
+
+# --- Tab 3: Checklist Generator ---
 with tab_checklist:
     st.subheader("보안대책 체크리스트 생성기")
     st.markdown("구축 유형과 AI 유형을 선택하면 맞춤형 체크리스트를 생성합니다.")
@@ -176,7 +222,7 @@ with tab_checklist:
     if bt_img_key and bt_img_key in image_index:
         img_path = IMAGE_DIR / image_index[bt_img_key]
         if img_path.exists():
-            st.image(str(img_path), caption=f"{cl_build} 구성 개념도", use_container_width=True)
+            st.image(str(img_path), caption=f"{cl_build} 구성 개념도", width=500)
 
     if st.button("체크리스트 생성", type="primary"):
         result = kg.query_by_context(build_type=cl_build, ai_type=cl_ai)
@@ -185,7 +231,7 @@ with tab_checklist:
 
         st.markdown("#### 주요 위협")
         for t in result["threats"]:
-            st.markdown(f"- **{t['id']}** {t['name']}: {t['risk']}")
+            bmd(f"- {t['id']} {t['name']}: {t['risk']}")
 
         st.markdown("#### 보안대책 체크리스트")
         for m in result["measures"]:
@@ -194,7 +240,7 @@ with tab_checklist:
             else:
                 st.checkbox(f"**{m['id']}** {m['name']}", key=f"check_{m['id']}")
 
-# --- Tab 3: Advisor (Chat) ---
+# --- Tab 4: Advisor (Chat) ---
 with tab_advisor:
     if "messages" not in st.session_state:
         st.session_state.messages = []

@@ -14,6 +14,8 @@ class SecurityKnowledgeGraph:
         self.measures = self._load(data_dir / "measures.json")
         self.links = self._load(data_dir / "threat_measure_links.json")
         self.build_types = self._load(data_dir / "build_type_focuses.json")
+        incidents_path = data_dir / "incidents.json"
+        self.incidents = self._load(incidents_path) if incidents_path.exists() else []
 
         # Index for fast lookup
         self._threat_by_id = {t["id"]: t for t in self.threats}
