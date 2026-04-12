@@ -545,6 +545,7 @@ with tab_trinity:
                     color=node_colors,
                     line=dict(color="white", width=0.5),
                 ),
+                textfont=dict(size=13, color="#000000", family="sans-serif"),
                 link=dict(
                     source=sources, target=targets, value=values,
                     color=link_colors,
