@@ -279,51 +279,32 @@ with tab_trinity:
 
     view_graph, view_sankey = st.tabs(["🕸️ 네트워크 그래프", "🌊 Sankey 흐름도"])
 
-    # --- 공통 필터 ---
-    filter_col1, filter_col2 = st.columns(2)
-    with filter_col1:
-        show_nis_pair = st.checkbox("🔴 NIS 위협 + 🔵 대책", value=True, key="trinity_nis_pair",
-                                    help="NIS 보안위협(T##)과 보안대책(M##)을 함께 표시")
-    with filter_col2:
-        show_ext_pair = st.checkbox("🟠 OWASP + 🟣 ATLAS 공격기법", value=False, key="trinity_ext_pair",
-                                    help="OWASP LLM Top 10과 MITRE ATLAS 공격기법을 함께 표시")
+    # --- 공통 필터: 라디오 (한 쌍만 선택) ---
+    pair_choice = st.radio(
+        "표시할 매핑 선택",
+        ["🔴 NIS 위협 ↔ 🔵 대책", "🟠 OWASP ↔ 🟣 ATLAS 공격기법"],
+        horizontal=True, key="trinity_pair",
+    )
+    show_nis_pair = pair_choice.startswith("🔴")
+    show_ext_pair = not show_nis_pair
 
     # ── View 1: Network Graph ──────────────────────────────────────────────
     with view_graph:
         try:
             from streamlit_agraph import agraph, Node, Edge, Config
-            from collections import defaultdict
 
             graph_data = kg.build_graph_data(
                 show_nis=show_nis_pair, show_atlas=show_ext_pair,
                 show_owasp=show_ext_pair, show_measures=show_nis_pair,
             )
 
-            # Bipartite column layout
-            if show_nis_pair and not show_ext_pair:
-                GROUP_X = {"NIS Threat": -250, "NIS Measure": 250}
-            elif not show_nis_pair and show_ext_pair:
-                GROUP_X = {"ATLAS": -250, "OWASP": 250}
-            else:
-                GROUP_X = {"ATLAS": -600, "OWASP": -200, "NIS Threat": 200, "NIS Measure": 600}
-
-            nodes_by_group = defaultdict(list)
-            for n in graph_data["nodes"]:
-                nodes_by_group[n["group"]].append(n)
-
             agraph_nodes = []
-            for group, group_nodes in nodes_by_group.items():
-                x = GROUP_X.get(group, 0)
-                count = len(group_nodes)
-                y_step = max(60, 900 // max(count, 1))
-                for i, n in enumerate(group_nodes):
-                    y = (i - (count - 1) / 2) * y_step
-                    agraph_nodes.append(Node(
-                        id=n["id"], label=n["label"], color=n["color"],
-                        shape=n["shape"], size=n["size"], title=n["title"],
-                        font={"color": "#333333", "size": 11},
-                        x=x, y=int(y),
-                    ))
+            for n in graph_data["nodes"]:
+                agraph_nodes.append(Node(
+                    id=n["id"], label=n["label"], color=n["color"],
+                    shape=n["shape"], size=n["size"], title=n["title"],
+                    font={"color": "#333333", "size": 11},
+                ))
 
             agraph_edges = []
             for e in graph_data["edges"]:
@@ -334,13 +315,16 @@ with tab_trinity:
 
             config = Config(
                 width="100%", height=900,
-                directed=False, physics=False, hierarchical=False,
+                directed=False, physics=True, hierarchical=False,
             )
 
+            # Legend with styled markers matching graph shapes
             st.markdown(
                 '<span style="font-size:0.85em;">'
-                '🔴 <b>NIS 위협</b> &nbsp; 🔵 <b>NIS 대책</b> &nbsp;'
-                '🟣 <b>ATLAS 공격기법</b> &nbsp; 🟠 <b>OWASP</b>'
+                '<span style="display:inline-block;width:12px;height:12px;background:#ed1c24;border-radius:50%;vertical-align:middle;"></span> <b>NIS 위협</b> &nbsp; '
+                '<span style="display:inline-block;width:12px;height:12px;background:#2f55a5;transform:rotate(45deg);vertical-align:middle;"></span> <b>NIS 대책</b> &nbsp; '
+                '<span style="display:inline-block;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:12px solid #7b2d8e;vertical-align:middle;"></span> <b>ATLAS 공격기법</b> &nbsp; '
+                '<span style="display:inline-block;width:12px;height:12px;background:#f58220;vertical-align:middle;"></span> <b>OWASP</b>'
                 '</span>', unsafe_allow_html=True,
             )
 
@@ -434,7 +418,6 @@ with tab_trinity:
     with view_sankey:
         import plotly.graph_objects as go
 
-        # 노드 레이블과 인덱스 수집
         labels = []
         label_idx = {}
 
@@ -446,68 +429,70 @@ with tab_trinity:
 
         sources, targets, values, link_colors = [], [], [], []
 
-        # ATLAS → NIS 위협
-        if show_ext_pair and show_nis_pair:
-            for am in kg._atlas_mapping:
-                tech = kg.get_atlas_technique(am["atlas_id"])
-                if not tech:
-                    continue
-                src_label = f"[ATLAS] {tech['id']}\n{tech['name_ko']}"
-                for tid in am.get("threat_ids", []):
-                    t = kg.get_threat(tid)
-                    if t:
-                        tgt_label = f"[NIS] {t['id']} {t['name']}"
-                        sources.append(_get_idx(src_label))
-                        targets.append(_get_idx(tgt_label))
-                        values.append(1)
-                        link_colors.append("rgba(123,45,142,0.25)")
-
-        # OWASP → NIS 위협
-        if show_ext_pair and show_nis_pair:
-            for om in kg._owasp_mapping:
-                o = kg.get_owasp(om["owasp_id"])
-                if not o:
-                    continue
-                src_label = f"[OWASP] {o['id']} {o['name_ko']}"
-                for tid in om.get("threat_ids", []):
-                    t = kg.get_threat(tid)
-                    if t:
-                        tgt_label = f"[NIS] {t['id']} {t['name']}"
-                        sources.append(_get_idx(src_label))
-                        targets.append(_get_idx(tgt_label))
-                        values.append(1)
-                        link_colors.append("rgba(245,130,32,0.25)")
-
-        # NIS 위협 → NIS 대책
         if show_nis_pair:
+            # NIS 위협 → NIS 대책
             for link in kg.links:
                 t = kg.get_threat(link["threat_id"])
                 m = kg.get_measure(link["measure_id"])
                 if t and m:
-                    src_label = f"[NIS] {t['id']} {t['name']}"
-                    tgt_label = f"[대책] {m['id']} {m['name']}"
+                    src_label = f"{t['id']} {t['name']}"
+                    tgt_label = f"{m['id']} {m['name']}"
                     sources.append(_get_idx(src_label))
                     targets.append(_get_idx(tgt_label))
                     values.append(1)
-                    link_colors.append("rgba(47,85,165,0.2)")
+                    link_colors.append("rgba(47,85,165,0.3)")
+
+        if show_ext_pair:
+            # ATLAS 공격기법 → OWASP (via shared NIS threats)
+            for am in kg._atlas_mapping:
+                tech = kg.get_atlas_technique(am["atlas_id"])
+                if not tech:
+                    continue
+                src_label = f"{tech['id']} {tech['name_ko']}"
+                for oid in am.get("owasp_ids", []):
+                    o = kg.get_owasp(oid)
+                    if o:
+                        tgt_label = f"{o['id']} {o['name_ko']}"
+                        sources.append(_get_idx(src_label))
+                        targets.append(_get_idx(tgt_label))
+                        values.append(2)
+                        link_colors.append("rgba(123,45,142,0.3)")
+
+            # Also show OWASP → NIS 위협 connections (one-hop context)
+            # These go from OWASP to the NIS threats they map to
+            for om in kg._owasp_mapping:
+                o = kg.get_owasp(om["owasp_id"])
+                if not o:
+                    continue
+                src_label = f"{o['id']} {o['name_ko']}"
+                for tid in om.get("threat_ids", []):
+                    t = kg.get_threat(tid)
+                    if t:
+                        tgt_label = f"{t['id']} {t['name']}"
+                        sources.append(_get_idx(src_label))
+                        targets.append(_get_idx(tgt_label))
+                        values.append(1)
+                        link_colors.append("rgba(245,130,32,0.3)")
 
         # 노드 색상
         node_colors = []
         for lbl in labels:
-            if lbl.startswith("[ATLAS]"):
+            if lbl.startswith("AML."):
                 node_colors.append("#7b2d8e")
-            elif lbl.startswith("[OWASP]"):
+            elif lbl.startswith("LLM"):
                 node_colors.append("#f58220")
-            elif lbl.startswith("[NIS]"):
+            elif lbl.startswith("T"):
                 node_colors.append("#ed1c24")
-            else:
+            elif lbl.startswith("M") or lbl.startswith("A-M") or lbl.startswith("P-M"):
                 node_colors.append("#2f55a5")
+            else:
+                node_colors.append("#888")
 
         if sources:
             fig = go.Figure(go.Sankey(
                 arrangement="snap",
                 node=dict(
-                    pad=12, thickness=18,
+                    pad=14, thickness=20,
                     label=labels,
                     color=node_colors,
                     line=dict(color="white", width=0.5),
@@ -517,9 +502,11 @@ with tab_trinity:
                     color=link_colors,
                 ),
             ))
+            sankey_title = "NIS 위협 → 대책" if show_nis_pair else "ATLAS 공격기법 → OWASP → NIS 위협"
             fig.update_layout(
-                height=700,
-                margin=dict(l=10, r=10, t=30, b=10),
+                title=dict(text=sankey_title, font=dict(size=14)),
+                height=800,
+                margin=dict(l=10, r=10, t=40, b=10),
                 font=dict(size=11, color="#333"),
             )
             st.plotly_chart(fig, use_container_width=True)
