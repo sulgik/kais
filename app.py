@@ -23,7 +23,6 @@ st.set_page_config(
 def load_kg():
     return SecurityKnowledgeGraph()
 
-@st.cache_data
 def load_image_index():
     index_path = Path(__file__).parent / "data" / "images" / "index.json"
     if index_path.exists():
