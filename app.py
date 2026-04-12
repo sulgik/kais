@@ -85,27 +85,6 @@ def show_threat_image(threat_id: str):
 with st.sidebar:
     st.title("⚙️ 설정")
 
-    st.subheader("🎯 컨텍스트 필터")
-
-    build_type = st.selectbox(
-        "구축 유형",
-        options=["전체", "내부망 전용", "외부망 연계", "대민서비스", "상용 AI서비스"],
-        index=0,
-    )
-
-    ai_type = st.selectbox(
-        "AI 유형",
-        options=["전체", "생성형 AI", "에이전틱 AI", "피지컬 AI"],
-        index=0,
-    )
-
-    lifecycle = st.selectbox(
-        "수명주기 단계",
-        options=["전체", "데이터 수집", "AI 학습", "AI시스템 구축", "AI시스템 운영", "AI시스템 폐기"],
-        index=0,
-    )
-
-    st.divider()
     stats = kg.summary()
     st.caption(f"📊 지식 그래프: {stats['total_threats']}개 위협 · {stats['total_measures']}개 대책 · {stats['total_links']}개 연결")
 
