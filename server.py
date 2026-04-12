@@ -10,7 +10,8 @@ mcp = FastMCP(
     instructions=(
         "KAIS는 국가정보원(NIS) AI보안 가이드북(2025.12) 기반 지식그래프입니다. "
         "공공기관 AI시스템 도입·운영 시 보안위협(T01~T15)과 보안대책(M01~M30, A-M, P-M)을 조회할 수 있습니다. "
-        "답변 시 반드시 위협번호(T##)와 대책번호(M##)를 인용하세요."
+        "MITRE ATLAS(AI 보안 프레임워크)와 OWASP LLM Top 10과의 교차 매핑도 제공합니다. "
+        "답변 시 위협번호(T##), 대책번호(M##), ATLAS 기법(AML.T####)을 인용하세요."
     ),
 )
 
@@ -144,6 +145,62 @@ def summary() -> dict:
     return kg.summary()
 
 
+# --- ATLAS Tools ---
+
+@mcp.tool()
+def get_atlas_technique(technique_id: str) -> dict:
+    """MITRE ATLAS 기법 상세 정보 및 NIS/OWASP 매핑을 조회합니다.
+
+    Args:
+        technique_id: ATLAS 기법 ID (예: AML.T0051, AML.T0020)
+    """
+    tech = kg.get_atlas_technique(technique_id)
+    if not tech:
+        return {"error": f"ATLAS 기법 '{technique_id}'을(를) 찾을 수 없습니다."}
+    mapping = kg.get_atlas_mapping(technique_id) or {}
+    threats = kg.get_threats_for_atlas(technique_id)
+    return {
+        **tech,
+        "nis_threats": [{"id": t["id"], "name": t["name"]} for t in threats],
+        "nis_measures": mapping.get("measure_ids", []),
+        "owasp_ids": mapping.get("owasp_ids", []),
+        "confidence": mapping.get("confidence", ""),
+        "rationale": mapping.get("rationale", ""),
+    }
+
+
+@mcp.tool()
+def search_atlas(keyword: str) -> list[dict]:
+    """키워드로 MITRE ATLAS 기법을 검색합니다.
+
+    Args:
+        keyword: 검색어 (예: prompt injection, 학습데이터, backdoor)
+    """
+    results = kg.search_atlas(keyword)
+    return [{"id": t["id"], "name": t["name"], "name_ko": t["name_ko"]} for t in results]
+
+
+@mcp.tool()
+def get_cross_framework_mapping(item_id: str) -> dict:
+    """NIS/ATLAS/OWASP 중 하나의 ID로 세 프레임워크의 교차 매핑을 조회합니다.
+
+    Args:
+        item_id: 항목 ID (예: T08, AML.T0051, LLM01)
+    """
+    result = kg.get_cross_framework(item_id)
+    if not result["framework"]:
+        return {"error": f"'{item_id}'을(를) 어떤 프레임워크에서도 찾을 수 없습니다."}
+    return {
+        "id": result["id"],
+        "framework": result["framework"],
+        "item": result["item"],
+        "nis_threats": [{"id": t["id"], "name": t["name"]} for t in result.get("nis_threats", [])],
+        "nis_measures": [{"id": m["id"], "name": m["name"]} for m in result.get("nis_measures", [])],
+        "owasp": [{"id": o["id"], "name": o.get("name", "")} for o in result.get("owasp", [])],
+        "atlas": [{"id": a["id"], "name": a["name"], "name_ko": a["name_ko"]} for a in result.get("atlas", [])],
+    }
+
+
 # --- Resources ---
 
 @mcp.resource("kais://threats")
@@ -168,6 +225,22 @@ def all_incidents() -> str:
 def all_owasp() -> str:
     """OWASP LLM Top 10 + NIS 매핑"""
     return json.dumps(kg.owasp, ensure_ascii=False, indent=2)
+
+
+@mcp.resource("kais://atlas")
+def all_atlas() -> str:
+    """MITRE ATLAS 전술·기법 전체 데이터"""
+    return json.dumps({
+        "tactics": kg.atlas_tactics,
+        "techniques": kg.atlas_techniques,
+        "mitigations": kg.atlas_mitigations,
+    }, ensure_ascii=False, indent=2)
+
+
+@mcp.resource("kais://trinity-mapping")
+def trinity_mapping() -> str:
+    """NIS-ATLAS-OWASP 3자 교차매핑"""
+    return json.dumps(kg._atlas_mapping, ensure_ascii=False, indent=2)
 
 
 if __name__ == "__main__":

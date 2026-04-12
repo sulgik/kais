@@ -1,0 +1,155 @@
+[
+  {
+    "atlas_id": "AML.T0020",
+    "atlas_name": "Poison Training Data",
+    "threat_ids": ["T01", "T03"],
+    "measure_ids": ["M01", "M03", "M04", "M05", "M08", "M10"],
+    "owasp_ids": ["LLM04"],
+    "confidence": "high",
+    "rationale": "AML.T0020은 NIS T01(학습데이터 오염)에 직접 대응. 백도어 삽입(T03)도 오염된 학습데이터를 통해 수행"
+  },
+  {
+    "atlas_id": "AML.T0019",
+    "atlas_name": "Publish Poisoned Datasets",
+    "threat_ids": ["T01", "T02"],
+    "measure_ids": ["M01", "M03", "M04"],
+    "owasp_ids": ["LLM04", "LLM03"],
+    "confidence": "high",
+    "rationale": "오염된 데이터셋 배포는 T01(학습데이터 오염)의 공급망 경로. 비인가 민감정보(T02)도 외부 데이터셋 경유 가능"
+  },
+  {
+    "atlas_id": "AML.T0018",
+    "atlas_name": "Backdoor ML Model",
+    "threat_ids": ["T03"],
+    "measure_ids": ["M02", "M03", "M10", "M11", "M12", "M22"],
+    "owasp_ids": ["LLM04"],
+    "confidence": "high",
+    "rationale": "AML.T0018은 NIS T03(AI 백도어 삽입)에 정확히 대응"
+  },
+  {
+    "atlas_id": "AML.T0024",
+    "atlas_name": "Exfiltration via ML Inference API",
+    "threat_ids": ["T04", "T06"],
+    "measure_ids": ["M05", "M08", "M09", "M13", "M14", "M15", "M16", "M28"],
+    "owasp_ids": ["LLM02", "LLM10"],
+    "confidence": "high",
+    "rationale": "추론 API를 통한 학습데이터 추출(T04) 및 모델 추출(T06)에 대응"
+  },
+  {
+    "atlas_id": "AML.T0057",
+    "atlas_name": "LLM Data Leakage",
+    "threat_ids": ["T04", "T07"],
+    "measure_ids": ["M05", "M06", "M07", "M08", "M13", "M15"],
+    "owasp_ids": ["LLM02"],
+    "confidence": "high",
+    "rationale": "LLM을 통한 학습데이터 추출(T04) 및 민감정보 유출(T07)에 대응"
+  },
+  {
+    "atlas_id": "AML.T0035",
+    "atlas_name": "ML Artifact Collection",
+    "threat_ids": ["T05", "T02"],
+    "measure_ids": ["M05", "M07", "M08", "M09"],
+    "owasp_ids": ["LLM02"],
+    "confidence": "medium",
+    "rationale": "ML 아티팩트(모델, 데이터)에 대한 비인가 접근은 T05(학습데이터 비인가자 접근)에 부분 대응"
+  },
+  {
+    "atlas_id": "AML.T0044",
+    "atlas_name": "Full ML Model Access",
+    "threat_ids": ["T06"],
+    "measure_ids": ["M16", "M17", "M28", "M29"],
+    "owasp_ids": ["LLM10"],
+    "confidence": "high",
+    "rationale": "모델 전체 접근은 NIS T06(AI모델 추출)에 직접 대응"
+  },
+  {
+    "atlas_id": "AML.T0051",
+    "atlas_name": "LLM Prompt Injection",
+    "threat_ids": ["T08"],
+    "measure_ids": ["M13", "M14", "M15", "M09", "M22", "M23", "M24", "M30"],
+    "owasp_ids": ["LLM01"],
+    "confidence": "high",
+    "rationale": "AML.T0051은 NIS T08(프롬프트 인젝션)에 정확히 대응"
+  },
+  {
+    "atlas_id": "AML.T0054",
+    "atlas_name": "LLM Jailbreak",
+    "threat_ids": ["T08"],
+    "measure_ids": ["M13", "M14", "M15", "M22", "M23", "M24"],
+    "owasp_ids": ["LLM01"],
+    "confidence": "high",
+    "rationale": "LLM 탈옥은 T08(프롬프트 인젝션)의 하위 유형으로, 가드레일 우회에 해당"
+  },
+  {
+    "atlas_id": "AML.T0043",
+    "atlas_name": "Craft Adversarial Data",
+    "threat_ids": ["T09"],
+    "measure_ids": ["M13", "M14", "M15", "M22", "M23", "M24"],
+    "owasp_ids": ["LLM09"],
+    "confidence": "high",
+    "rationale": "적대적 데이터 생성은 NIS T09(회피 공격)에 직접 대응"
+  },
+  {
+    "atlas_id": "AML.T0053",
+    "atlas_name": "Evade ML Model",
+    "threat_ids": ["T09"],
+    "measure_ids": ["M13", "M14", "M22", "M23"],
+    "owasp_ids": ["LLM09"],
+    "confidence": "high",
+    "rationale": "ML 모델 회피는 NIS T09(회피 공격/Evasion attack)에 정확히 대응"
+  },
+  {
+    "atlas_id": "AML.T0029",
+    "atlas_name": "Denial of ML Service",
+    "threat_ids": ["T11"],
+    "measure_ids": ["M09", "M14", "M27"],
+    "owasp_ids": ["LLM10"],
+    "confidence": "high",
+    "rationale": "ML 서비스 거부는 NIS T11(서비스 거부 공격)에 직접 대응"
+  },
+  {
+    "atlas_id": "AML.T0034",
+    "atlas_name": "Cost Harvesting",
+    "threat_ids": ["T11"],
+    "measure_ids": ["M09", "M14", "M27"],
+    "owasp_ids": ["LLM10"],
+    "confidence": "medium",
+    "rationale": "비용 착취(과도한 사용금액 부과)는 T11의 경제적 피해 측면에 대응"
+  },
+  {
+    "atlas_id": "AML.T0010",
+    "atlas_name": "ML Supply Chain Compromise",
+    "threat_ids": ["T14", "T03"],
+    "measure_ids": ["M01", "M02", "M03", "M10", "M11", "M12", "M25", "M29"],
+    "owasp_ids": ["LLM03"],
+    "confidence": "high",
+    "rationale": "ML 공급망 침해는 NIS T14(공급망 공격)에 직접 대응. 백도어 삽입(T03)도 공급망 경로"
+  },
+  {
+    "atlas_id": "AML.T0055",
+    "atlas_name": "Unsafe LLM Output Handling",
+    "threat_ids": ["T08", "T13"],
+    "measure_ids": ["M13", "M15", "M19", "M20"],
+    "owasp_ids": ["LLM05"],
+    "confidence": "high",
+    "rationale": "안전하지 않은 출력 처리는 T08(프롬프트 인젝션 후속)과 T13(권한관리 부실)에 대응"
+  },
+  {
+    "atlas_id": "AML.T0056",
+    "atlas_name": "LLM Meta Prompt Extraction",
+    "threat_ids": ["T08", "T04"],
+    "measure_ids": ["M13", "M14", "M15"],
+    "owasp_ids": ["LLM07"],
+    "confidence": "high",
+    "rationale": "시스템 프롬프트 추출은 T08(프롬프트 인젝션)과 T04(학습데이터 추출)에 관련"
+  },
+  {
+    "atlas_id": "AML.T0050",
+    "atlas_name": "Command and Control via AI Agent",
+    "threat_ids": ["T13"],
+    "measure_ids": ["M19", "M20", "M21", "M26"],
+    "owasp_ids": ["LLM06"],
+    "confidence": "medium",
+    "rationale": "AI 에이전트를 통한 C2는 T13(AI시스템 권한관리 부실)과 관련. 에이전틱 AI 위협"
+  }
+]

@@ -55,12 +55,17 @@ def _m_badge(mid: str) -> str:
 def _owasp_badge(oid: str) -> str:
     return f'<span style="background:#f58220;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:0.85em;white-space:nowrap;">{oid}</span>'
 
-_BADGE_PATTERN = re.compile(r'\b(LLM\d{2}|T\d{2}|M\d{2}|A-M\d{2}|P-M\d{2})\b')
+def _atlas_badge(aid: str) -> str:
+    return f'<span style="background:#7b2d8e;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:0.85em;white-space:nowrap;">{aid}</span>'
+
+_BADGE_PATTERN = re.compile(r'\b(AML\.T\d{4}|LLM\d{2}|T\d{2}|M\d{2}|A-M\d{2}|P-M\d{2})\b')
 
 def badged(text: str) -> str:
     '''Replace all LLM##, T##, M##, A-M##, P-M## in text with colored HTML badges.'''
     def _repl(m):
         token = m.group(1)
+        if token.startswith("AML."):
+            return _atlas_badge(token)
         if token.startswith("T"):
             return _t_badge(token)
         if token.startswith("LLM"):
@@ -85,7 +90,8 @@ with st.sidebar:
     st.title("⚙️ 설정")
 
     stats = kg.summary()
-    st.caption(f"📊 지식 그래프: {stats['total_threats']}개 위협 · {stats['total_measures']}개 대책 · {stats['total_links']}개 연결")
+    atlas_count = stats.get('atlas_techniques', 0)
+    st.caption(f"📊 지식 그래프: {stats['total_threats']}개 위협 · {stats['total_measures']}개 대책 · {stats['total_links']}개 연결 · {atlas_count}개 ATLAS 기법")
 
     st.divider()
     st.markdown("📄 **관련 문서**")
@@ -117,15 +123,15 @@ st.warning(
 )
 
 # --- Tabs ---
-tab_home, tab_explorer, tab_owasp, tab_incidents, tab_checklist, tab_mcp = st.tabs(
-    ["홈", "🔍 지식 탐색", "🌐 OWASP LLM Top 10", "🔥 사고 사례", "✅ 체크리스트", "🔌 MCP 연결"]
+tab_home, tab_explorer, tab_trinity, tab_owasp, tab_incidents, tab_checklist, tab_mcp = st.tabs(
+    ["홈", "🔍 지식 탐색", "🗺️ 통합 지식맵", "🌐 OWASP LLM Top 10", "🔥 사고 사례", "✅ 체크리스트", "🔌 MCP 연결"]
 )
 
 # --- Tab 0: Home ---
 with tab_home:
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
-    col_nis, col_owasp = st.columns(2, gap="large")
+    col_nis, col_owasp, col_atlas = st.columns(3, gap="large")
 
     with col_nis:
         st.markdown("""
@@ -180,6 +186,32 @@ AI시스템에 특화된 15개 위협 유형을 정의합니다.
 """)
         st.link_button("원문 보기 — genai.owasp.org", "https://genai.owasp.org/", use_container_width=True)
 
+    with col_atlas:
+        st.markdown("""
+<div style="border-left:4px solid #7b2d8e; padding-left:16px; margin-bottom:16px;">
+  <div style="font-size:1.05rem; font-weight:700; color:#1a1a2e;">MITRE ATLAS</div>
+  <div style="font-size:0.8rem; color:#888;">Adversarial Threat Landscape for AI Systems</div>
+</div>
+""", unsafe_allow_html=True)
+        st.markdown(f"""
+**MITRE ATLAS**는 AI/ML 시스템에 대한 적대적 위협을
+ATT&CK 프레임워크 스타일로 체계화한 **taxonomy**입니다.
+
+**{len(kg.atlas_tactics)}개 전술 (Tactics)**
+정찰, 초기접근, 실행, 지속성 유지, 유출, 영향 등
+공격 킬체인의 각 단계를 정의합니다.
+
+**{len(kg.atlas_techniques)}개 기법 (Techniques)**
+학습데이터 오염, 프롬프트 인젝션, 모델 추출,
+적대적 데이터 생성 등 구체적 공격 기법입니다.
+
+**본 시스템의 차별점**
+NIS 위협(T##) ↔ ATLAS 기법(AML.T####) ↔ OWASP(LLM##)
+**3자 교차 매핑**을 제공하여, 어느 프레임워크에서든
+관련 항목을 즉시 탐색할 수 있습니다.
+""")
+        st.link_button("원문 보기 — atlas.mitre.org", "https://atlas.mitre.org/", use_container_width=True)
+
     st.divider()
     st.caption("참고 기준: NIST AI RMF · MITRE ATLAS · OWASP LLM Top 10 · NIS AI보안 가이드북(2025.12)")
 
@@ -210,6 +242,13 @@ with tab_explorer:
                 if related_owasp:
                     badges = " ".join(_owasp_badge(o["owasp_id"]) for o in related_owasp)
                     st.markdown(f"**OWASP 연결:** {badges}", unsafe_allow_html=True)
+                # ATLAS cross-reference
+                related_atlas = kg.get_atlas_for_threat(t["id"])
+                if related_atlas:
+                    badges = " ".join(_atlas_badge(a["id"]) for a in related_atlas)
+                    st.markdown(f"**ATLAS 연결:** {badges}", unsafe_allow_html=True)
+                    for a in related_atlas:
+                        st.caption(f"  {a['id']} {a['name_ko']} — {a['name']}")
 
     with col2:
         st.subheader("보안대책 (M01~M30)")
@@ -234,7 +273,154 @@ with tab_explorer:
                     badges = " ".join(_t_badge(t["id"]) for t in related_threats)
                     st.markdown(f"**대응 위협:** {badges}", unsafe_allow_html=True)
 
-# --- Tab 2: OWASP LLM Top 10 ---
+# --- Tab 2: Trinity Knowledge Map ---
+with tab_trinity:
+    st.subheader("통합 지식맵 — NIS + MITRE ATLAS + OWASP")
+    st.caption("세 프레임워크의 교차 매핑을 인터랙티브 그래프로 탐색합니다. 노드를 클릭하면 상세 정보를 확인할 수 있습니다.")
+
+    try:
+        from streamlit_agraph import agraph, Node, Edge, Config
+
+        # Filter controls
+        filter_col1, filter_col2, filter_col3, filter_col4 = st.columns([1, 1, 1, 2])
+        with filter_col1:
+            show_nis = st.checkbox("NIS 위협", value=True, key="trinity_nis")
+        with filter_col2:
+            show_atlas = st.checkbox("ATLAS 기법", value=True, key="trinity_atlas")
+        with filter_col3:
+            show_owasp = st.checkbox("OWASP", value=True, key="trinity_owasp")
+        with filter_col4:
+            show_measures = st.checkbox("NIS 대책 (M##)", value=False, key="trinity_measures",
+                                        help="대책 노드를 표시하면 그래프가 복잡해질 수 있습니다")
+
+        # Build graph data
+        graph_data = kg.build_graph_data(
+            show_nis=show_nis, show_atlas=show_atlas,
+            show_owasp=show_owasp, show_measures=show_measures,
+        )
+
+        # Convert to agraph objects
+        agraph_nodes = []
+        for n in graph_data["nodes"]:
+            agraph_nodes.append(Node(
+                id=n["id"], label=n["label"], color=n["color"],
+                shape=n["shape"], size=n["size"], title=n["title"],
+            ))
+        agraph_edges = []
+        for e in graph_data["edges"]:
+            edge_kwargs = {"source": e["source"], "target": e["target"], "color": e.get("color", "#888")}
+            if e.get("width"):
+                edge_kwargs["width"] = e["width"]
+            agraph_edges.append(Edge(**edge_kwargs))
+
+        config = Config(
+            width="100%",
+            height=600,
+            directed=False,
+            physics=True,
+            hierarchical=False,
+            nodeHighlightBehavior=True,
+            highlightColor="#ff0",
+            collapsible=False,
+            node={"highlightStrokeColor": "blue"},
+            link={"highlightColor": "lightblue"},
+        )
+
+        # Two-column layout: graph + detail
+        graph_col, detail_col = st.columns([3, 2])
+
+        with graph_col:
+            selected = agraph(nodes=agraph_nodes, edges=agraph_edges, config=config)
+
+        # Legend
+        st.markdown(
+            '<span style="font-size:0.85em;">'
+            '🔴 <b>NIS 위협</b> &nbsp; '
+            '🟣 <b>ATLAS 기법</b> &nbsp; '
+            '🟠 <b>OWASP</b> &nbsp; '
+            '🔵 <b>NIS 대책</b>'
+            '</span>',
+            unsafe_allow_html=True,
+        )
+
+        with detail_col:
+            if selected:
+                st.session_state["trinity_selected"] = selected
+
+            sel_id = st.session_state.get("trinity_selected")
+            if sel_id:
+                cross = kg.get_cross_framework(sel_id)
+
+                if cross["framework"] == "NIS":
+                    item = cross["item"]
+                    st.markdown(f"### {_t_badge(item['id'])} {item['name']}", unsafe_allow_html=True)
+                    st.markdown(f"**정의:** {item.get('definition', '')}")
+                    st.markdown(f"**위험:** {item.get('risk', '')}")
+                    if cross["atlas"]:
+                        st.markdown("**ATLAS 연결:**")
+                        for a in cross["atlas"]:
+                            st.markdown(f"- {_atlas_badge(a['id'])} [{a['name_ko']}]({a.get('url', '')})", unsafe_allow_html=True)
+                    if cross["owasp"]:
+                        st.markdown("**OWASP 연결:**")
+                        for o in cross["owasp"]:
+                            st.markdown(f"- {_owasp_badge(o['id'])} {o.get('name_ko', o.get('name', ''))}", unsafe_allow_html=True)
+                    if cross["nis_measures"]:
+                        badges = " ".join(_m_badge(m["id"]) for m in cross["nis_measures"])
+                        st.markdown(f"**대응 대책:** {badges}", unsafe_allow_html=True)
+
+                elif cross["framework"] == "ATLAS":
+                    item = cross["item"]
+                    st.markdown(f"### {_atlas_badge(item['id'])} {item['name_ko']}", unsafe_allow_html=True)
+                    st.markdown(f"**{item['name']}**")
+                    st.markdown(item.get("description", ""))
+                    st.markdown(f"[ATLAS 원문 보기 →]({item.get('url', '')})")
+                    if cross["nis_threats"]:
+                        st.markdown("**NIS 위협 연결:**")
+                        for t in cross["nis_threats"]:
+                            st.markdown(f"- {_t_badge(t['id'])} {t['name']}", unsafe_allow_html=True)
+                    if cross["owasp"]:
+                        st.markdown("**OWASP 연결:**")
+                        for o in cross["owasp"]:
+                            st.markdown(f"- {_owasp_badge(o['id'])} {o.get('name_ko', o.get('name', ''))}", unsafe_allow_html=True)
+                    if cross["nis_measures"]:
+                        badges = " ".join(_m_badge(m["id"]) for m in cross["nis_measures"])
+                        st.markdown(f"**대응 대책:** {badges}", unsafe_allow_html=True)
+
+                elif cross["framework"] == "OWASP":
+                    item = cross["item"]
+                    st.markdown(f"### {_owasp_badge(item['id'])} {item.get('name_ko', item['name'])}", unsafe_allow_html=True)
+                    st.markdown(f"**{item['name']}**")
+                    if cross["nis_threats"]:
+                        st.markdown("**NIS 위협 연결:**")
+                        for t in cross["nis_threats"]:
+                            st.markdown(f"- {_t_badge(t['id'])} {t['name']}", unsafe_allow_html=True)
+                    if cross["atlas"]:
+                        st.markdown("**ATLAS 연결:**")
+                        for a in cross["atlas"]:
+                            st.markdown(f"- {_atlas_badge(a['id'])} {a['name_ko']}", unsafe_allow_html=True)
+                    if cross["nis_measures"]:
+                        badges = " ".join(_m_badge(m["id"]) for m in cross["nis_measures"])
+                        st.markdown(f"**대응 대책:** {badges}", unsafe_allow_html=True)
+            else:
+                st.info("👈 그래프에서 노드를 클릭하면 상세 정보가 표시됩니다.")
+
+    except ImportError:
+        st.error("streamlit-agraph가 설치되지 않았습니다. `pip install streamlit-agraph`를 실행해주세요.")
+
+        # Fallback: show mapping table
+        st.markdown("#### NIS ↔ ATLAS ↔ OWASP 매핑 테이블")
+        _atlas_map_path = Path(__file__).parent / "data" / "atlas_nis_mapping.json"
+        if _atlas_map_path.exists():
+            atlas_mapping_data = json.loads(_atlas_map_path.read_text(encoding="utf-8"))
+            for am in atlas_mapping_data:
+                t_badges = " ".join(_t_badge(tid) for tid in am.get("threat_ids", []))
+                o_badges = " ".join(_owasp_badge(oid) for oid in am.get("owasp_ids", []))
+                st.markdown(
+                    f"{_atlas_badge(am['atlas_id'])} **{am['atlas_name']}** → {t_badges} {o_badges}",
+                    unsafe_allow_html=True,
+                )
+
+# --- Tab 3: OWASP LLM Top 10 ---
 with tab_owasp:
     st.subheader("OWASP Top 10 for LLM Applications (2025)")
     st.caption("각 항목과 NIS AI보안 가이드북의 대응 위협·대책을 교차 매핑합니다.")
@@ -267,6 +453,18 @@ with tab_owasp:
             if measure_ids:
                 badges = " ".join(_m_badge(mid) for mid in measure_ids)
                 st.markdown(f"**대응 대책:** {badges}", unsafe_allow_html=True)
+
+            # ATLAS cross-reference (via shared NIS threats)
+            atlas_ids = set()
+            for tid in threat_ids:
+                for a in kg.get_atlas_for_threat(tid):
+                    atlas_ids.add(a["id"])
+            if atlas_ids:
+                st.markdown("##### MITRE ATLAS 매핑")
+                for aid in sorted(atlas_ids):
+                    tech = kg.get_atlas_technique(aid)
+                    if tech:
+                        st.markdown(f"- {_atlas_badge(aid)} [{tech['name_ko']}]({tech.get('url', '')}) — {tech['name']}", unsafe_allow_html=True)
 
 # --- Tab 3: Incidents ---
 with tab_incidents:
@@ -637,6 +835,9 @@ pip install -e .
 | `search_measures` | 키워드로 대책 검색 |
 | `list_incidents` | 보안 사고 사례 조회 |
 | `get_owasp_mapping` | OWASP LLM Top 10 ↔ NIS 매핑 조회 |
+| `get_atlas_technique` | ATLAS 기법 상세 + NIS/OWASP 매핑 조회 |
+| `search_atlas` | 키워드로 ATLAS 기법 검색 |
+| `get_cross_framework_mapping` | 3자 교차 매핑 (T##/AML.T####/LLM##) |
 | `summary` | 지식그래프 통계 |
 
 ---

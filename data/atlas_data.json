@@ -1,0 +1,535 @@
+{
+  "version": "4.8.1",
+  "source": "MITRE ATLAS (atlas.mitre.org)",
+  "tactics": [
+    {
+      "id": "AML.TA0000",
+      "name": "Reconnaissance",
+      "name_ko": "정찰",
+      "description": "The adversary is trying to gather information about the ML system.",
+      "url": "https://atlas.mitre.org/tactics/AML.TA0000"
+    },
+    {
+      "id": "AML.TA0001",
+      "name": "Resource Development",
+      "name_ko": "자원 개발",
+      "description": "The adversary is trying to establish resources to support operations against the ML system.",
+      "url": "https://atlas.mitre.org/tactics/AML.TA0001"
+    },
+    {
+      "id": "AML.TA0002",
+      "name": "Initial Access",
+      "name_ko": "초기 접근",
+      "description": "The adversary is trying to gain access to the ML system.",
+      "url": "https://atlas.mitre.org/tactics/AML.TA0002"
+    },
+    {
+      "id": "AML.TA0003",
+      "name": "ML Model Access",
+      "name_ko": "ML 모델 접근",
+      "description": "The adversary is trying to gain some level of access to the ML model.",
+      "url": "https://atlas.mitre.org/tactics/AML.TA0003"
+    },
+    {
+      "id": "AML.TA0004",
+      "name": "Execution",
+      "name_ko": "실행",
+      "description": "The adversary is trying to run malicious code or manipulate the ML system.",
+      "url": "https://atlas.mitre.org/tactics/AML.TA0004"
+    },
+    {
+      "id": "AML.TA0005",
+      "name": "Persistence",
+      "name_ko": "지속성 유지",
+      "description": "The adversary is trying to maintain their foothold in the ML system.",
+      "url": "https://atlas.mitre.org/tactics/AML.TA0005"
+    },
+    {
+      "id": "AML.TA0006",
+      "name": "Defense Evasion",
+      "name_ko": "방어 회피",
+      "description": "The adversary is trying to avoid being detected by the ML system's defenses.",
+      "url": "https://atlas.mitre.org/tactics/AML.TA0006"
+    },
+    {
+      "id": "AML.TA0007",
+      "name": "Discovery",
+      "name_ko": "탐색",
+      "description": "The adversary is trying to figure out details about the ML environment.",
+      "url": "https://atlas.mitre.org/tactics/AML.TA0007"
+    },
+    {
+      "id": "AML.TA0008",
+      "name": "Collection",
+      "name_ko": "수집",
+      "description": "The adversary is trying to gather ML artifacts and data of interest.",
+      "url": "https://atlas.mitre.org/tactics/AML.TA0008"
+    },
+    {
+      "id": "AML.TA0009",
+      "name": "ML Attack Staging",
+      "name_ko": "ML 공격 준비",
+      "description": "The adversary is leveraging knowledge of the ML system to stage an attack.",
+      "url": "https://atlas.mitre.org/tactics/AML.TA0009"
+    },
+    {
+      "id": "AML.TA0010",
+      "name": "Exfiltration",
+      "name_ko": "유출",
+      "description": "The adversary is trying to steal ML artifacts or data from the system.",
+      "url": "https://atlas.mitre.org/tactics/AML.TA0010"
+    },
+    {
+      "id": "AML.TA0011",
+      "name": "Impact",
+      "name_ko": "영향",
+      "description": "The adversary is trying to manipulate, interrupt, or destroy the ML system and its data.",
+      "url": "https://atlas.mitre.org/tactics/AML.TA0011"
+    }
+  ],
+  "techniques": [
+    {
+      "id": "AML.T0000",
+      "name": "Search for Victim's Publicly Available Research Materials",
+      "name_ko": "공개 연구자료 탐색",
+      "tactic_ids": ["AML.TA0000"],
+      "description": "Search for information about the victim's ML models and datasets in publicly available research.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0000"
+    },
+    {
+      "id": "AML.T0001",
+      "name": "Search for Victim's Open Source ML Models",
+      "name_ko": "오픈소스 ML 모델 탐색",
+      "tactic_ids": ["AML.TA0000"],
+      "description": "Search for victim's open source ML models that may reveal information about the target.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0001"
+    },
+    {
+      "id": "AML.T0002",
+      "name": "Search for Technical Blogs/Research",
+      "name_ko": "기술 블로그/연구 탐색",
+      "tactic_ids": ["AML.TA0000"],
+      "description": "Search for publicly available technical blogs and research about victim's ML systems.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0002"
+    },
+    {
+      "id": "AML.T0010",
+      "name": "ML Supply Chain Compromise",
+      "name_ko": "ML 공급망 침해",
+      "tactic_ids": ["AML.TA0002"],
+      "description": "Adversaries may manipulate products or delivery mechanisms of ML supply chain to compromise ML systems.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0010"
+    },
+    {
+      "id": "AML.T0011",
+      "name": "Acquire Public ML Artifacts",
+      "name_ko": "공개 ML 아티팩트 획득",
+      "tactic_ids": ["AML.TA0001"],
+      "description": "Adversaries may search and acquire publicly available ML artifacts to support operations.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0011"
+    },
+    {
+      "id": "AML.T0012",
+      "name": "Develop Adversarial ML Attacks",
+      "name_ko": "적대적 ML 공격 개발",
+      "tactic_ids": ["AML.TA0001"],
+      "description": "Adversaries may develop attacks specific to the target ML model.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0012"
+    },
+    {
+      "id": "AML.T0016",
+      "name": "Obtain Capabilities",
+      "name_ko": "역량 획득",
+      "tactic_ids": ["AML.TA0001"],
+      "description": "Adversaries may obtain ML attack tools and frameworks.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0016"
+    },
+    {
+      "id": "AML.T0018",
+      "name": "Backdoor ML Model",
+      "name_ko": "ML 모델 백도어",
+      "tactic_ids": ["AML.TA0005"],
+      "description": "Adversaries may implant a backdoor in an ML model that can be triggered by specific input patterns.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0018"
+    },
+    {
+      "id": "AML.T0019",
+      "name": "Publish Poisoned Datasets",
+      "name_ko": "오염된 데이터셋 배포",
+      "tactic_ids": ["AML.TA0001"],
+      "description": "Adversaries may publish poisoned datasets to compromise ML systems that use them.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0019"
+    },
+    {
+      "id": "AML.T0020",
+      "name": "Poison Training Data",
+      "name_ko": "학습데이터 오염",
+      "tactic_ids": ["AML.TA0005"],
+      "description": "Adversaries may poison training data to embed vulnerabilities or influence model behavior.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0020"
+    },
+    {
+      "id": "AML.T0024",
+      "name": "Exfiltration via ML Inference API",
+      "name_ko": "ML 추론 API를 통한 유출",
+      "tactic_ids": ["AML.TA0010"],
+      "description": "Adversaries may exfiltrate ML artifacts through the inference API by reconstructing training data or model parameters.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0024"
+    },
+    {
+      "id": "AML.T0025",
+      "name": "Exfiltration via Cyber Means",
+      "name_ko": "사이버 수단을 통한 유출",
+      "tactic_ids": ["AML.TA0010"],
+      "description": "Adversaries may exfiltrate ML artifacts using traditional cyber exfiltration techniques.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0025"
+    },
+    {
+      "id": "AML.T0029",
+      "name": "Denial of ML Service",
+      "name_ko": "ML 서비스 거부",
+      "tactic_ids": ["AML.TA0011"],
+      "description": "Adversaries may disrupt ML services through excessive queries, resource exhaustion, or model corruption.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0029"
+    },
+    {
+      "id": "AML.T0031",
+      "name": "Erode ML Model Integrity",
+      "name_ko": "ML 모델 무결성 훼손",
+      "tactic_ids": ["AML.TA0011"],
+      "description": "Adversaries may degrade the ML model's performance through adversarial techniques.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0031"
+    },
+    {
+      "id": "AML.T0034",
+      "name": "Cost Harvesting",
+      "name_ko": "비용 착취",
+      "tactic_ids": ["AML.TA0011"],
+      "description": "Adversaries may exploit ML services to generate excessive costs for the victim.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0034"
+    },
+    {
+      "id": "AML.T0035",
+      "name": "ML Artifact Collection",
+      "name_ko": "ML 아티팩트 수집",
+      "tactic_ids": ["AML.TA0008"],
+      "description": "Adversaries may collect ML artifacts such as models, datasets, and configurations.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0035"
+    },
+    {
+      "id": "AML.T0036",
+      "name": "Data from Information Repositories",
+      "name_ko": "정보 저장소 데이터 수집",
+      "tactic_ids": ["AML.TA0008"],
+      "description": "Adversaries may collect data from ML information repositories such as model registries and data stores.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0036"
+    },
+    {
+      "id": "AML.T0040",
+      "name": "ML Model Inference API Access",
+      "name_ko": "ML 모델 추론 API 접근",
+      "tactic_ids": ["AML.TA0003"],
+      "description": "Adversaries may gain access to the ML model through an inference API.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0040"
+    },
+    {
+      "id": "AML.T0042",
+      "name": "Verify Attack",
+      "name_ko": "공격 검증",
+      "tactic_ids": ["AML.TA0009"],
+      "description": "Adversaries may verify the effectiveness of their attack against the target ML system.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0042"
+    },
+    {
+      "id": "AML.T0043",
+      "name": "Craft Adversarial Data",
+      "name_ko": "적대적 데이터 생성",
+      "tactic_ids": ["AML.TA0009"],
+      "description": "Adversaries may craft adversarial examples to cause misclassification or other errors in the ML model.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0043"
+    },
+    {
+      "id": "AML.T0044",
+      "name": "Full ML Model Access",
+      "name_ko": "ML 모델 전체 접근",
+      "tactic_ids": ["AML.TA0003"],
+      "description": "Adversaries may gain full access to the ML model including architecture, weights, and training data.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0044"
+    },
+    {
+      "id": "AML.T0047",
+      "name": "ML-Enabled Product or Service",
+      "name_ko": "ML 기반 제품/서비스 접근",
+      "tactic_ids": ["AML.TA0002"],
+      "description": "Adversaries may gain initial access through ML-enabled products or services.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0047"
+    },
+    {
+      "id": "AML.T0048",
+      "name": "Discover ML Model Ontology",
+      "name_ko": "ML 모델 온톨로지 탐색",
+      "tactic_ids": ["AML.TA0007"],
+      "description": "Adversaries may discover the ontology or taxonomy of the ML model to understand its structure.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0048"
+    },
+    {
+      "id": "AML.T0049",
+      "name": "Exploit Public-Facing Application",
+      "name_ko": "공개 애플리케이션 악용",
+      "tactic_ids": ["AML.TA0002"],
+      "description": "Adversaries may exploit vulnerabilities in public-facing ML applications for initial access.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0049"
+    },
+    {
+      "id": "AML.T0050",
+      "name": "Command and Control via AI Agent",
+      "name_ko": "AI 에이전트를 통한 C2",
+      "tactic_ids": ["AML.TA0004"],
+      "description": "Adversaries may leverage AI agents to establish command and control channels.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0050"
+    },
+    {
+      "id": "AML.T0051",
+      "name": "LLM Prompt Injection",
+      "name_ko": "LLM 프롬프트 인젝션",
+      "tactic_ids": ["AML.TA0004", "AML.TA0009"],
+      "description": "Adversaries may inject malicious instructions into LLM prompts to manipulate model behavior, bypass guardrails, or exfiltrate data.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0051"
+    },
+    {
+      "id": "AML.T0052",
+      "name": "Phishing via AI",
+      "name_ko": "AI를 이용한 피싱",
+      "tactic_ids": ["AML.TA0002"],
+      "description": "Adversaries may use AI-generated content for phishing attacks.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0052"
+    },
+    {
+      "id": "AML.T0053",
+      "name": "Evade ML Model",
+      "name_ko": "ML 모델 회피",
+      "tactic_ids": ["AML.TA0006"],
+      "description": "Adversaries may craft inputs designed to evade the ML model's detection or classification.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0053"
+    },
+    {
+      "id": "AML.T0054",
+      "name": "LLM Jailbreak",
+      "name_ko": "LLM 탈옥",
+      "tactic_ids": ["AML.TA0006"],
+      "description": "Adversaries may bypass LLM safety guardrails to generate harmful, unethical, or policy-violating content.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0054"
+    },
+    {
+      "id": "AML.T0055",
+      "name": "Unsafe LLM Output Handling",
+      "name_ko": "안전하지 않은 LLM 출력 처리",
+      "tactic_ids": ["AML.TA0004"],
+      "description": "Adversaries may exploit improper handling of LLM outputs to execute code or manipulate downstream systems.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0055"
+    },
+    {
+      "id": "AML.T0056",
+      "name": "LLM Meta Prompt Extraction",
+      "name_ko": "LLM 메타 프롬프트 추출",
+      "tactic_ids": ["AML.TA0008"],
+      "description": "Adversaries may extract system prompts or meta instructions from LLMs.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0056"
+    },
+    {
+      "id": "AML.T0057",
+      "name": "LLM Data Leakage",
+      "name_ko": "LLM 데이터 유출",
+      "tactic_ids": ["AML.TA0010"],
+      "description": "Adversaries may extract sensitive training data or private information from LLM outputs.",
+      "url": "https://atlas.mitre.org/techniques/AML.T0057"
+    }
+  ],
+  "mitigations": [
+    {
+      "id": "AML.M0000",
+      "name": "Limit Model Artifact Release",
+      "name_ko": "모델 아티팩트 공개 제한",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0000"
+    },
+    {
+      "id": "AML.M0001",
+      "name": "Limit Dataset Artifact Release",
+      "name_ko": "데이터셋 아티팩트 공개 제한",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0001"
+    },
+    {
+      "id": "AML.M0002",
+      "name": "Passive ML Output Obfuscation",
+      "name_ko": "수동적 ML 출력 난독화",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0002"
+    },
+    {
+      "id": "AML.M0003",
+      "name": "Model Hardening",
+      "name_ko": "모델 강화",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0003"
+    },
+    {
+      "id": "AML.M0004",
+      "name": "Restrict Number of ML Model Queries",
+      "name_ko": "ML 모델 쿼리 수 제한",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0004"
+    },
+    {
+      "id": "AML.M0005",
+      "name": "Control Access to ML Models and Data at Rest",
+      "name_ko": "ML 모델·데이터 저장 시 접근 통제",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0005"
+    },
+    {
+      "id": "AML.M0006",
+      "name": "Use Ensemble Methods",
+      "name_ko": "앙상블 기법 사용",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0006"
+    },
+    {
+      "id": "AML.M0007",
+      "name": "Sanitize Training Data",
+      "name_ko": "학습데이터 정제",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0007"
+    },
+    {
+      "id": "AML.M0008",
+      "name": "Validate ML Model",
+      "name_ko": "ML 모델 검증",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0008"
+    },
+    {
+      "id": "AML.M0009",
+      "name": "Use Multi-Modal Sensors",
+      "name_ko": "다중 모달 센서 사용",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0009"
+    },
+    {
+      "id": "AML.M0010",
+      "name": "Input Restoration",
+      "name_ko": "입력 복원",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0010"
+    },
+    {
+      "id": "AML.M0011",
+      "name": "Restrict Library Loading",
+      "name_ko": "라이브러리 로딩 제한",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0011"
+    },
+    {
+      "id": "AML.M0012",
+      "name": "Encrypt Sensitive Information",
+      "name_ko": "민감정보 암호화",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0012"
+    },
+    {
+      "id": "AML.M0013",
+      "name": "Code Signing",
+      "name_ko": "코드 서명",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0013"
+    },
+    {
+      "id": "AML.M0014",
+      "name": "Verify ML Artifacts",
+      "name_ko": "ML 아티팩트 검증",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0014"
+    },
+    {
+      "id": "AML.M0015",
+      "name": "Adversarial Input Detection",
+      "name_ko": "적대적 입력 탐지",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0015"
+    },
+    {
+      "id": "AML.M0016",
+      "name": "Vulnerability Scanning",
+      "name_ko": "취약점 스캐닝",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0016"
+    },
+    {
+      "id": "AML.M0017",
+      "name": "Model Distribution Methods",
+      "name_ko": "모델 배포 방법 관리",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0017"
+    },
+    {
+      "id": "AML.M0018",
+      "name": "User Training",
+      "name_ko": "사용자 교육",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0018"
+    },
+    {
+      "id": "AML.M0019",
+      "name": "Control Access to ML Models and Data in Transit",
+      "name_ko": "ML 모델·데이터 전송 시 접근 통제",
+      "url": "https://atlas.mitre.org/mitigations/AML.M0019"
+    }
+  ],
+  "case_studies": [
+    {
+      "id": "AML.CS0000",
+      "name": "Evasion of Deep Learning Detector for Malware C&C Traffic",
+      "name_ko": "악성 C&C 트래픽 딥러닝 탐지기 회피",
+      "technique_ids": ["AML.T0043"],
+      "url": "https://atlas.mitre.org/studies/AML.CS0000"
+    },
+    {
+      "id": "AML.CS0003",
+      "name": "Adversarial Attack on Sentiment Analysis System",
+      "name_ko": "감성 분석 시스템 적대적 공격",
+      "technique_ids": ["AML.T0043"],
+      "url": "https://atlas.mitre.org/studies/AML.CS0003"
+    },
+    {
+      "id": "AML.CS0004",
+      "name": "Camera Hijack Attack on Facial Recognition System",
+      "name_ko": "안면인식 시스템 카메라 하이재킹",
+      "technique_ids": ["AML.T0043", "AML.T0053"],
+      "url": "https://atlas.mitre.org/studies/AML.CS0004"
+    },
+    {
+      "id": "AML.CS0005",
+      "name": "Attack on Machine Translation Service - Loss of Revenue",
+      "name_ko": "기계번역 서비스 공격 - 매출 손실",
+      "technique_ids": ["AML.T0024"],
+      "url": "https://atlas.mitre.org/studies/AML.CS0005"
+    },
+    {
+      "id": "AML.CS0007",
+      "name": "GPT-2 Model Replication",
+      "name_ko": "GPT-2 모델 복제",
+      "technique_ids": ["AML.T0024", "AML.T0044"],
+      "url": "https://atlas.mitre.org/studies/AML.CS0007"
+    },
+    {
+      "id": "AML.CS0009",
+      "name": "Backdoor Attack on Deep Learning Models in Mobile Apps",
+      "name_ko": "모바일 앱 딥러닝 모델 백도어 공격",
+      "technique_ids": ["AML.T0018", "AML.T0010"],
+      "url": "https://atlas.mitre.org/studies/AML.CS0009"
+    },
+    {
+      "id": "AML.CS0012",
+      "name": "Tay Poisoning",
+      "name_ko": "MS 테이 오염 사건",
+      "technique_ids": ["AML.T0020"],
+      "url": "https://atlas.mitre.org/studies/AML.CS0012"
+    },
+    {
+      "id": "AML.CS0014",
+      "name": "Indirect Prompt Injection Threats",
+      "name_ko": "간접 프롬프트 인젝션 위협",
+      "technique_ids": ["AML.T0051"],
+      "url": "https://atlas.mitre.org/studies/AML.CS0014"
+    },
+    {
+      "id": "AML.CS0016",
+      "name": "ChatGPT Training Data Extraction",
+      "name_ko": "ChatGPT 학습데이터 추출",
+      "technique_ids": ["AML.T0024", "AML.T0057"],
+      "url": "https://atlas.mitre.org/studies/AML.CS0016"
+    }
+  ]
+}

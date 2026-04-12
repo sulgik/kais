@@ -25,6 +25,24 @@ class SecurityKnowledgeGraph:
         self._owasp_by_id = {o["id"]: o for o in self.owasp}
         self._owasp_map_by_id = {m["owasp_id"]: m for m in self._owasp_mapping}
 
+        # MITRE ATLAS
+        atlas_path = data_dir / "atlas_data.json"
+        self._atlas_raw = self._load_json(atlas_path) if atlas_path.exists() else {}
+        self.atlas_tactics = self._atlas_raw.get("tactics", [])
+        self.atlas_techniques = self._atlas_raw.get("techniques", [])
+        self.atlas_mitigations = self._atlas_raw.get("mitigations", [])
+        self.atlas_case_studies = self._atlas_raw.get("case_studies", [])
+        self._atlas_tactic_by_id = {t["id"]: t for t in self.atlas_tactics}
+        self._atlas_tech_by_id = {t["id"]: t for t in self.atlas_techniques}
+        atlas_map_path = data_dir / "atlas_nis_mapping.json"
+        self._atlas_mapping = self._load(atlas_map_path) if atlas_map_path.exists() else []
+        self._atlas_map_by_id = {m["atlas_id"]: m for m in self._atlas_mapping}
+        # Reverse index: NIS threat -> ATLAS techniques
+        self._atlas_for_threat = {}
+        for am in self._atlas_mapping:
+            for tid in am.get("threat_ids", []):
+                self._atlas_for_threat.setdefault(tid, []).append(am["atlas_id"])
+
         # Index for fast lookup
         self._threat_by_id = {t["id"]: t for t in self.threats}
         self._measure_by_id = {m["id"]: m for m in self.measures}
@@ -35,6 +53,10 @@ class SecurityKnowledgeGraph:
             self._threats_for_measure.setdefault(link["measure_id"], []).append(link["threat_id"])
 
     def _load(self, path: Path) -> list[dict]:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+
+    def _load_json(self, path: Path) -> dict:
         with open(path, encoding="utf-8") as f:
             return json.load(f)
 
@@ -162,6 +184,146 @@ class SecurityKnowledgeGraph:
                     result.append(owasp)
         return result
 
+    # === ATLAS queries ===
+    def get_atlas_technique(self, technique_id: str) -> dict | None:
+        return self._atlas_tech_by_id.get(technique_id)
+
+    def get_atlas_tactic(self, tactic_id: str) -> dict | None:
+        return self._atlas_tactic_by_id.get(tactic_id)
+
+    def get_atlas_for_threat(self, threat_id: str) -> list[dict]:
+        atlas_ids = self._atlas_for_threat.get(threat_id, [])
+        return [self._atlas_tech_by_id[aid] for aid in atlas_ids if aid in self._atlas_tech_by_id]
+
+    def get_threats_for_atlas(self, atlas_id: str) -> list[dict]:
+        mapping = self._atlas_map_by_id.get(atlas_id, {})
+        return [self._threat_by_id[tid] for tid in mapping.get("threat_ids", []) if tid in self._threat_by_id]
+
+    def get_atlas_mapping(self, atlas_id: str) -> dict | None:
+        return self._atlas_map_by_id.get(atlas_id)
+
+    def search_atlas(self, keyword: str) -> list[dict]:
+        kw = keyword.lower()
+        results = []
+        for t in self.atlas_techniques:
+            searchable = " ".join([t["name"], t["name_ko"], t.get("description", "")]).lower()
+            if kw in searchable:
+                results.append(t)
+        return results
+
+    def get_cross_framework(self, item_id: str) -> dict:
+        """Unified cross-framework lookup by any ID (T##, LLM##, AML.T####)."""
+        result = {"id": item_id, "framework": None, "item": None, "nis_threats": [], "nis_measures": [], "owasp": [], "atlas": []}
+
+        # NIS Threat
+        if item_id in self._threat_by_id:
+            t = self._threat_by_id[item_id]
+            result["framework"] = "NIS"
+            result["item"] = t
+            result["nis_measures"] = self.get_measures_for_threat(item_id)
+            result["owasp"] = self.get_owasp_for_threat(item_id)
+            result["atlas"] = self.get_atlas_for_threat(item_id)
+            return result
+
+        # OWASP
+        if item_id in self._owasp_by_id:
+            o = self._owasp_by_id[item_id]
+            result["framework"] = "OWASP"
+            result["item"] = o
+            nis = self.get_nis_for_owasp(item_id)
+            result["nis_threats"] = nis["threats"]
+            result["nis_measures"] = nis["measures"]
+            # Find linked ATLAS via NIS threats
+            atlas_ids = set()
+            for t in nis["threats"]:
+                for aid in self._atlas_for_threat.get(t["id"], []):
+                    atlas_ids.add(aid)
+            result["atlas"] = [self._atlas_tech_by_id[aid] for aid in atlas_ids if aid in self._atlas_tech_by_id]
+            return result
+
+        # ATLAS
+        if item_id in self._atlas_tech_by_id:
+            tech = self._atlas_tech_by_id[item_id]
+            mapping = self._atlas_map_by_id.get(item_id, {})
+            result["framework"] = "ATLAS"
+            result["item"] = tech
+            result["nis_threats"] = [self._threat_by_id[tid] for tid in mapping.get("threat_ids", []) if tid in self._threat_by_id]
+            result["nis_measures"] = [self._measure_by_id[mid] for mid in mapping.get("measure_ids", []) if mid in self._measure_by_id]
+            result["owasp"] = [self._owasp_by_id[oid] for oid in mapping.get("owasp_ids", []) if oid in self._owasp_by_id]
+            return result
+
+        return result
+
+    def build_graph_data(self, show_nis: bool = True, show_atlas: bool = True,
+                         show_owasp: bool = True, show_measures: bool = False) -> dict:
+        """Build nodes and edges for streamlit-agraph visualization."""
+        nodes = []
+        edges = []
+        seen_nodes = set()
+
+        def _add_node(nid, label, color, shape, size, group, title=""):
+            if nid not in seen_nodes:
+                seen_nodes.add(nid)
+                nodes.append({
+                    "id": nid, "label": label, "color": color,
+                    "shape": shape, "size": size, "group": group, "title": title,
+                })
+
+        # NIS Threats
+        if show_nis:
+            for t in self.threats:
+                _add_node(t["id"], f"{t['id']}\n{t['name']}", "#ed1c24", "dot", 25, "NIS Threat", t["name"])
+
+        # OWASP
+        if show_owasp:
+            for o in self.owasp:
+                _add_node(o["id"], f"{o['id']}\n{o['name_ko']}", "#f58220", "square", 22, "OWASP", o["name"])
+
+        # ATLAS Techniques (only mapped ones)
+        if show_atlas:
+            for am in self._atlas_mapping:
+                tech = self._atlas_tech_by_id.get(am["atlas_id"])
+                if tech:
+                    _add_node(tech["id"], f"{tech['id']}\n{tech['name_ko']}", "#7b2d8e", "triangle", 20, "ATLAS", tech["name"])
+
+        # NIS Measures (optional, can be noisy)
+        if show_measures and show_nis:
+            for m in self.measures:
+                _add_node(m["id"], f"{m['id']}\n{m['name'][:8]}", "#2f55a5", "diamond", 12, "NIS Measure", m["name"])
+
+        # --- Edges ---
+        # NIS Threat <-> NIS Measure
+        if show_measures and show_nis:
+            for link in self.links:
+                if link["threat_id"] in seen_nodes and link["measure_id"] in seen_nodes:
+                    edges.append({"source": link["threat_id"], "target": link["measure_id"], "color": "#2f55a5", "width": 1})
+
+        # NIS Threat <-> OWASP
+        if show_nis and show_owasp:
+            for om in self._owasp_mapping:
+                oid = om["owasp_id"]
+                for tid in om.get("threat_ids", []):
+                    if oid in seen_nodes and tid in seen_nodes:
+                        edges.append({"source": tid, "target": oid, "color": "#f58220", "width": 2, "dashes": True})
+
+        # NIS Threat <-> ATLAS Technique
+        if show_nis and show_atlas:
+            for am in self._atlas_mapping:
+                aid = am["atlas_id"]
+                for tid in am.get("threat_ids", []):
+                    if aid in seen_nodes and tid in seen_nodes:
+                        edges.append({"source": tid, "target": aid, "color": "#7b2d8e", "width": 2, "dashes": True})
+
+        # ATLAS <-> OWASP (via shared NIS threats)
+        if show_atlas and show_owasp:
+            for am in self._atlas_mapping:
+                aid = am["atlas_id"]
+                for oid in am.get("owasp_ids", []):
+                    if aid in seen_nodes and oid in seen_nodes:
+                        edges.append({"source": aid, "target": oid, "color": "#cc6600", "width": 1, "dashes": [5, 5]})
+
+        return {"nodes": nodes, "edges": edges}
+
     # === Summary stats ===
     def summary(self) -> dict:
         return {
@@ -172,6 +334,8 @@ class SecurityKnowledgeGraph:
             "common_measures": len(self.get_measures_by_ai_type(None)),
             "agentic_measures": len(self.get_measures_by_ai_type("에이전틱 AI")),
             "physical_measures": len(self.get_measures_by_ai_type("피지컬 AI")),
+            "atlas_techniques": len(self.atlas_techniques),
+            "atlas_mappings": len(self._atlas_mapping),
         }
 
 
