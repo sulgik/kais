@@ -221,6 +221,12 @@ with tab_incidents:
                 bmd(inc["description"])
                 if inc.get("source"):
                     st.caption(f"출처: {inc['source']}")
+                # 사고 관련 이미지
+                img_key = inc.get("image")
+                if img_key and img_key in image_index:
+                    img_path = IMAGE_DIR / image_index[img_key]
+                    if img_path.exists():
+                        st.image(str(img_path), use_container_width=True)
     else:
         st.info("사고 사례 데이터가 없습니다.")
 
@@ -439,7 +445,11 @@ def _generate_checklist_html(cl_build: str, cl_ai: str, result: dict) -> str:
 
   <div class="footer">
     <span>KAIS v{KAIS_VERSION} · {generated_at} · {cl_build} + {cl_ai}</span>
-    <span>Made by sulgik@gmail.com · 비공식 실험 서비스</span>
+    <span>
+      <a href="https://k-ai-sec.streamlit.app" target="_blank">k-ai-sec.streamlit.app</a> ·
+      <a href="https://github.com/sulgik/kais" target="_blank">github.com/sulgik/kais</a> ·
+      sulgik@gmail.com
+    </span>
   </div>
 
 </div>
