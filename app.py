@@ -290,6 +290,20 @@ NIS 위협(T##) ↔ ATLAS 기법(AML.T####) ↔ OWASP(LLM##)
     st.divider()
 
     # ── 홈 네트워크 그래프 ──
+    st.markdown("""
+**🗺️ AI 보안 프레임워크 통합 지도**
+
+아래 그래프는 세 가지 주요 AI 보안 프레임워크의 관계를 시각화합니다.
+**선으로 연결된 노드**는 서로 관련된 보안 항목입니다. **노드를 클릭**하면 상세 정보를 확인할 수 있고,
+드래그하거나 스크롤하여 그래프를 탐색할 수 있습니다.
+
+| 색상 | 프레임워크 | 설명 |
+|------|-----------|------|
+| 🔴 빨강 | **NIS 보안위협** (T01~T15) | 국정원 가이드북이 정의한 AI 보안위협 |
+| 🟣 보라 | **ATLAS 공격기법** (AML.T0000) | MITRE가 분류한 AI 대상 실제 공격 기법 |
+| 🟠 주황 | **OWASP LLM Top 10** (LLM01~10) | LLM 애플리케이션 10대 취약점 |
+""")
+
     try:
         from streamlit_agraph import agraph, Node, Edge, Config
 
@@ -318,15 +332,10 @@ NIS 위협(T##) ↔ ATLAS 기법(AML.T####) ↔ OWASP(LLM##)
             directed=False, physics=True, hierarchical=False,
         )
 
-        st.markdown(
-            '<span style="font-size:0.85em;">'
-            '<span style="display:inline-block;width:12px;height:12px;background:#ed1c24;border-radius:50%;vertical-align:middle;"></span> <b>NIS 위협</b> &nbsp; '
-            '<span style="display:inline-block;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:12px solid #7b2d8e;vertical-align:middle;"></span> <b>ATLAS 공격기법</b> &nbsp; '
-            '<span style="display:inline-block;width:12px;height:12px;background:#f58220;vertical-align:middle;"></span> <b>OWASP</b>'
-            '</span>', unsafe_allow_html=True,
-        )
-
-        agraph(nodes=agraph_nodes, edges=agraph_edges, config=config)
+        selected_home = agraph(nodes=agraph_nodes, edges=agraph_edges, config=config)
+        if selected_home:
+            st.session_state["trinity_selected"] = selected_home
+            st.rerun()
 
     except ImportError:
         pass
