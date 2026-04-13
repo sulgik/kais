@@ -32,6 +32,50 @@ def load_image_index():
 kg = load_kg()
 image_index = load_image_index()
 IMAGE_DIR = Path(__file__).parent / "data" / "images"
+GUIDE_FIGURES_DIR = Path(__file__).parent / "extracted_figures_ai_guide"
+
+_GUIDE_FIG_FILES = {
+    1: "figure_01_p009_AI시스템_개념도.png",
+    2: "figure_02_p010_AI시스템의_발전.png",
+    3: "figure_03_p011_사이버보안과_AI보안.png",
+    4: "figure_04_p012_학습데이터_오염.png",
+    5: "figure_05_p013_비인가_민감정보_학습.png",
+    6: "figure_06_p014_AI_백도어_삽입.png",
+    7: "figure_07_p014_학습데이터_추출.png",
+    8: "figure_08_p015_학습데이터_비인가자_접근_사용자_A_B_구분없이_학습데이터_노출.png",
+    9: "figure_09_p015_AI모델_추출.png",
+    10: "figure_10_p016_민감정보_입력_유출.png",
+    11: "figure_11_p016_프롬프트_인젝션.png",
+    12: "figure_12_p017_회피_공격.png",
+    13: "figure_13_p018_통신구간_공격.png",
+    14: "figure_14_p018_서비스_거부_공격.png",
+    15: "figure_15_p019_사고_이상행위_모니터링_체계_부재.png",
+    16: "figure_16_p019_AI시스템_권한관리_부실.png",
+    17: "figure_17_p020_공급망_공격.png",
+    18: "figure_18_p020_용역업체_보안관리_부실.png",
+    19: "figure_19_p023_AI시스템_수명주기.png",
+    20: "figure_20_p027_수명주기별_주요_보안위협.png",
+    21: "figure_21_p039_모니터링_M09_필터링_M13_및_입력_길이_형식_제한_M14.png",
+    22: "figure_22_p041_민감_명령_승인_절차_마련_M20.png",
+    23: "figure_23_p044_내부망_전용_AI시스템_개념도.png",
+    24: "figure_24_p045_내부망_전용_AI시스템_활용_사례.png",
+    25: "figure_25_p048_프롬프트웨어_PromptLock_사례.png",
+    26: "figure_26_p049_내부업무용_AI시스템의_외부망_연계_개념도.png",
+    27: "figure_27_p050_AI_신고접수시스템_구축_활용_사례.png",
+    28: "figure_28_p053_대민서비스용_AI시스템의_내부망_연계_개념도.png",
+    29: "figure_29_p054_기관_특화_정보검색_AI_챗봇_구축_활용_사례.png",
+    30: "figure_30_p057_상용_AI서비스_활용_개념도.png",
+    31: "figure_31_p058_공공기관_AI_비서_도입_활용_사례.png",
+    32: "figure_32_p064_에이전틱_AI_개념도.png",
+    33: "figure_33_p066_에이전틱_AI를_활용한_행정_원스톱_서비스_활용_예시.png",
+    34: "figure_34_p073_AI_메모리_오염_및_무단_권한_침해_사례.png",
+    35: "figure_35_p074_구성요소_취약점에_의한_악성행위_수행_사례.png",
+    36: "figure_36_p075_피지컬_AI_개념도.png",
+    37: "figure_37_p077_피지컬_AI를_활용한_현장설비_안전상태_진단_예시.png",
+}
+
+_bt_focuses_path = Path(__file__).parent / "data" / "build_type_focuses.json"
+build_type_focuses = json.loads(_bt_focuses_path.read_text(encoding="utf-8")) if _bt_focuses_path.exists() else []
 
 # Load incidents directly (not via cached kg to avoid stale cache issues)
 _incidents_path = Path(__file__).parent / "data" / "incidents.json"
@@ -83,6 +127,17 @@ def show_threat_image(threat_id: str):
         img_path = IMAGE_DIR / image_index[threat_id]
         if img_path.exists():
             st.image(str(img_path), use_container_width=True)
+
+
+def _show_guide_fig(n: int, caption: str = ""):
+    """Display a guide figure by its 1-based number from the PDF figure manifest."""
+    fn = _GUIDE_FIG_FILES.get(n)
+    if fn:
+        p = GUIDE_FIGURES_DIR / fn
+        if p.exists():
+            st.image(str(p), use_container_width=True)
+            if caption:
+                st.caption(f"[그림 {n}] {caption}")
 
 
 # ── Custom CSS for authoritative look ──────────────────────
@@ -145,6 +200,7 @@ with st.sidebar:
 
     ALL_MENU = {
         "home": "홈",
+        "guidebook": "📖 가이드북 (웹북)",
         "explorer": "NIS AI보안 가이드 — 위협·대책",
         "incidents": "사고 사례",
         "checklist": "체크리스트 생성기",
@@ -172,7 +228,7 @@ with st.sidebar:
 
     # Build nav with section headers using simple buttons
     st.markdown('<div class="sidebar-section">국내 기준</div>', unsafe_allow_html=True)
-    for key in ["home", "explorer", "incidents", "checklist"]:
+    for key in ["home", "guidebook", "explorer", "incidents", "checklist"]:
         if st.button(ALL_MENU[key], key=f"nav_{key}", use_container_width=True):
             st.session_state["_page"] = key
             st.rerun()
@@ -869,6 +925,432 @@ elif page == "checklist":
             mime="text/html",
             help="독립 실행 가능한 HTML 체크리스트 파일로 저장합니다.",
         )
+
+# ═══════════════════════════════════════════════════════════
+# Page: Guidebook (PDF Navigator Style)
+# ═══════════════════════════════════════════════════════════
+elif page == "guidebook":
+    st.markdown("""
+<div style="padding:4px 0 12px;">
+  <div style="font-size:1.45rem;font-weight:900;letter-spacing:-0.5px;color:#1a1a2e;">
+    국가·공공기관 AI 보안 가이드북
+  </div>
+  <div style="font-size:0.78rem;color:#5a7a9a;margin-top:4px;">
+    국가정보원 발간 (2025년 12월) · 인터랙티브 웹북
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    LIFECYCLES = ["데이터 수집", "AI 학습", "AI시스템 구축", "AI시스템 운영", "AI시스템 폐기"]
+    LC_SHORT = ["수집", "학습", "구축", "운영", "폐기"]
+
+    tab_intro, tab_threats, tab_measures, tab_buildtype, tab_aitype = st.tabs([
+        "1장 · AI시스템 이해",
+        "2장 · 보안위협 T01~T15",
+        "3장 · 보안대책 M01~M30+",
+        "4장 · 구축유형별 가이드",
+        "5장 · 특수 AI 유형",
+    ])
+
+    # ── 1장: AI시스템 이해 ────────────────────────────────────
+    with tab_intro:
+        st.markdown("### AI시스템이란?")
+        st.markdown(
+            "AI시스템은 학습 데이터를 기반으로 훈련된 AI 모델을 핵심으로, "
+            "데이터 파이프라인·추론 엔진·사용자 인터페이스 등이 결합된 복합 시스템입니다."
+        )
+        _show_guide_fig(1, "AI시스템 개념도")
+
+        st.divider()
+        st.markdown("### AI시스템의 발전")
+        st.markdown(
+            "AI는 단순 분류·예측 모델에서 생성형 AI, 에이전틱 AI로 급격히 발전하며 "
+            "공공 행정 전반에 활용되고 있습니다."
+        )
+        _show_guide_fig(2, "AI시스템의 발전")
+
+        st.divider()
+        st.markdown("### 사이버보안과 AI보안")
+        st.markdown(
+            "기존 사이버보안 위협이 AI시스템에도 적용되지만, "
+            "학습데이터 오염·모델 추출 등 AI 고유 위협이 추가로 존재합니다."
+        )
+        _show_guide_fig(3, "사이버보안과 AI보안")
+
+        st.divider()
+        st.markdown("### AI시스템 수명주기")
+        st.markdown(
+            "AI시스템은 **데이터 수집 → AI 학습 → AI시스템 구축 → 운영 → 폐기** "
+            "5단계 수명주기를 가지며, 각 단계마다 고유한 보안위협이 존재합니다."
+        )
+        _show_guide_fig(19, "AI시스템 수명주기")
+
+    # ── 2장: 보안위협 T01~T15 ─────────────────────────────────
+    with tab_threats:
+        threats_list = kg.threats
+
+        col_toc2, col_content2 = st.columns([1, 3], gap="large")
+
+        with col_toc2:
+            st.markdown(
+                '<div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;'
+                'letter-spacing:1px;color:#5a7a9a;padding:4px 0 8px;">위협 목록</div>',
+                unsafe_allow_html=True,
+            )
+            for t in threats_list:
+                is_sel = st.session_state.get("guide_threat") == t["id"]
+                short = t["name"][:11] + ("…" if len(t["name"]) > 11 else "")
+                label_html = (
+                    f'<div style="padding:5px 8px;border-radius:5px;font-size:0.78rem;'
+                    f'{"background:rgba(237,28,36,0.10);color:#c0101a;font-weight:700;" if is_sel else "color:#444;"}'
+                    f'">{_t_badge(t["id"])} {short}</div>'
+                )
+                st.markdown(label_html, unsafe_allow_html=True)
+                if st.button(
+                    t["name"], key=f"guide_t_{t['id']}",
+                    label_visibility="collapsed", use_container_width=True
+                ):
+                    st.session_state["guide_threat"] = t["id"]
+                    st.session_state.pop("guide_show_matrix", None)
+                    st.rerun()
+
+            st.divider()
+            if st.button("📊 수명주기 매트릭스", key="guide_matrix_btn", use_container_width=True):
+                st.session_state["guide_show_matrix"] = True
+                st.session_state.pop("guide_threat", None)
+                st.rerun()
+
+        with col_content2:
+            show_matrix = st.session_state.get("guide_show_matrix", False)
+            sel_threat_id = st.session_state.get("guide_threat")
+
+            if show_matrix:
+                st.markdown("#### 수명주기별 주요 보안위협")
+                _show_guide_fig(20, "수명주기별 주요 보안위협")
+                st.divider()
+                lc_header = (
+                    "<tr>"
+                    "<th style='padding:6px 10px;text-align:left;'>ID</th>"
+                    "<th style='padding:6px 10px;text-align:left;'>위협명</th>"
+                    + "".join(f"<th style='padding:6px 8px;white-space:nowrap;'>{lc}</th>" for lc in LC_SHORT)
+                    + "</tr>"
+                )
+                lc_rows = ""
+                for t in threats_list:
+                    lcs = t.get("lifecycles", [])
+                    cells = "".join(
+                        '<td style="text-align:center;color:#ed1c24;font-size:1.05em;font-weight:bold;">●</td>'
+                        if LIFECYCLES[i] in lcs
+                        else '<td style="text-align:center;color:#dde;">○</td>'
+                        for i in range(len(LIFECYCLES))
+                    )
+                    lc_rows += (
+                        f'<tr>'
+                        f'<td style="padding:5px 8px;">{_t_badge(t["id"])}</td>'
+                        f'<td style="padding:5px 8px;font-size:0.85em;white-space:nowrap;">{t["name"]}</td>'
+                        f'{cells}'
+                        f'</tr>'
+                    )
+                st.markdown(
+                    f'<table style="border-collapse:collapse;width:100%;font-size:0.85em;margin-top:12px;">'
+                    f'<thead style="background:#1a1a2e;color:white;">{lc_header}</thead>'
+                    f'<tbody>{lc_rows}</tbody>'
+                    f'</table>',
+                    unsafe_allow_html=True,
+                )
+
+            elif sel_threat_id:
+                t = kg.get_threat(sel_threat_id)
+                if t:
+                    tid_num = int(sel_threat_id[1:])  # T01→1, T15→15
+                    fig_num = tid_num + 3             # T01→fig4, T15→fig18
+
+                    st.markdown(f"### {_t_badge(t['id'])} {t['name']}", unsafe_allow_html=True)
+
+                    lc_pills = " ".join(
+                        f'<span style="background:#e8f0ff;color:#2f55a5;padding:2px 10px;'
+                        f'border-radius:12px;font-size:0.78em;">{lc}</span>'
+                        for lc in t.get("lifecycles", [])
+                    )
+                    st.markdown(f'<div style="margin-bottom:14px;">{lc_pills}</div>', unsafe_allow_html=True)
+
+                    _show_guide_fig(fig_num, t["name"])
+
+                    st.markdown(f"**정의**")
+                    st.markdown(t.get("definition", ""))
+                    st.markdown(f"**위험**")
+                    st.markdown(t.get("risk", ""))
+
+                    if t.get("examples"):
+                        st.markdown("**사고 사례**")
+                        for ex in t["examples"]:
+                            st.markdown(f"> {ex}")
+
+                    measures = kg.get_measures_for_threat(sel_threat_id)
+                    owasp_list = kg.get_owasp_for_threat(sel_threat_id)
+                    if measures or owasp_list:
+                        st.divider()
+                        c1, c2 = st.columns(2)
+                        with c1:
+                            if measures:
+                                st.markdown("**관련 대책**")
+                                st.markdown(
+                                    " ".join(_m_badge(m["id"]) for m in measures),
+                                    unsafe_allow_html=True,
+                                )
+                        with c2:
+                            if owasp_list:
+                                st.markdown("**OWASP 매핑**")
+                                st.markdown(
+                                    " ".join(_owasp_badge(o["id"]) for o in owasp_list),
+                                    unsafe_allow_html=True,
+                                )
+            else:
+                st.markdown("""
+<div style="background:#f8f9fa;border-radius:10px;padding:48px 30px;text-align:center;color:#888;margin-top:20px;">
+  <div style="font-size:2.2rem;margin-bottom:14px;">👈</div>
+  <div style="font-size:0.9rem;line-height:1.7;">
+    왼쪽 목록에서 위협을 선택하거나<br>
+    <strong>수명주기 매트릭스</strong>를 확인하세요
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    # ── 3장: 보안대책 ──────────────────────────────────────────
+    with tab_measures:
+        m_basic = sorted(
+            [m for m in kg.measures if m["id"].startswith("M") and not m["id"].startswith("M0") or
+             (m["id"].startswith("M") and not m["id"].startswith("A-") and not m["id"].startswith("P-"))],
+            key=lambda x: int(re.findall(r'\d+', x["id"])[0]),
+        )
+        # Safer filter: anything starting with "M" but not "A-M" or "P-M"
+        m_basic = sorted(
+            [m for m in kg.measures if re.match(r'^M\d', m["id"])],
+            key=lambda x: int(re.findall(r'\d+', x["id"])[0]),
+        )
+        m_agentic = sorted(
+            [m for m in kg.measures if m["id"].startswith("A-M")],
+            key=lambda x: int(re.findall(r'\d+', x["id"])[0]),
+        )
+        m_physical = sorted(
+            [m for m in kg.measures if m["id"].startswith("P-M")],
+            key=lambda x: int(re.findall(r'\d+', x["id"])[0]),
+        )
+
+        msearch = st.text_input(
+            "대책 검색 (키워드)",
+            key="guide_msearch",
+            placeholder="예: 모니터링, 암호화, 접근제어, 프롬프트 …",
+        )
+
+        def _filter_m(lst):
+            if not msearch:
+                return lst
+            q = msearch.lower()
+            return [
+                m for m in lst
+                if q in m["name"].lower() or q in m.get("description", "").lower()
+            ]
+
+        def _render_measure_expander(m, shown_figs: set):
+            with st.expander(f"{m['id']} — {m['name']}"):
+                st.markdown(m.get("description", ""))
+                if m.get("details"):
+                    for d in m["details"]:
+                        st.markdown(f"- {d}")
+                if m.get("checklist"):
+                    st.info(f"✅ **체크리스트 항목**: {m['checklist']}")
+                # Inline figures for specific measures
+                if m["id"] in ("M09", "M13", "M14") and 21 not in shown_figs:
+                    _show_guide_fig(21, "모니터링(M09), 필터링(M13), 입력 길이·형식 제한(M14)")
+                    shown_figs.add(21)
+                if m["id"] == "M20" and 22 not in shown_figs:
+                    _show_guide_fig(22, "민감 명령 승인 절차 마련(M20)")
+                    shown_figs.add(22)
+                related = kg.get_threats_for_measure(m["id"])
+                if related:
+                    st.markdown(
+                        "**대응 위협:** " + " ".join(_t_badge(t["id"]) for t in related),
+                        unsafe_allow_html=True,
+                    )
+
+        shown_figs: set = set()
+
+        st.markdown(f"#### NIS 기본 대책 (M01~M{len(m_basic):02d})")
+        st.caption(f"공공기관 AI시스템 전반에 적용되는 {len(m_basic)}개 보안대책")
+        for m in _filter_m(m_basic):
+            _render_measure_expander(m, shown_figs)
+
+        if m_agentic:
+            st.divider()
+            st.markdown("#### 에이전틱 AI 대책 (A-M)")
+            st.caption(f"에이전틱 AI 전용 {len(m_agentic)}개 추가 대책")
+            for m in _filter_m(m_agentic):
+                _render_measure_expander(m, shown_figs)
+
+        if m_physical:
+            st.divider()
+            st.markdown("#### 피지컬 AI 대책 (P-M)")
+            st.caption(f"피지컬 AI 전용 {len(m_physical)}개 추가 대책")
+            for m in _filter_m(m_physical):
+                _render_measure_expander(m, shown_figs)
+
+    # ── 4장: 구축유형별 가이드 ────────────────────────────────
+    with tab_buildtype:
+        BUILD_CONFIGS = [
+            {
+                "key": "내부망 전용 AI시스템",
+                "concept_fig": 23, "usecase_fig": 24,
+                "extra_figs": [],
+                "desc": (
+                    "외부 인터넷과 완전히 분리된 내부망에서만 운용되는 AI시스템. "
+                    "내부 행정자료 기반 생성형 AI, 내부 문서 검색 AI 등에 적용되며, "
+                    "데이터 유출 차단이 가장 핵심 보안 목표입니다."
+                ),
+                "page_range": "pp. 43–46",
+            },
+            {
+                "key": "내부업무용 AI시스템의 외부망 연계",
+                "concept_fig": 26, "usecase_fig": 27,
+                "extra_figs": [(25, "프롬프트웨어 PromptLock 사례")],
+                "desc": (
+                    "내부 업무에 AI를 활용하되 외부 인터넷과 연계가 필요한 시스템. "
+                    "외부 최신 정보 검색·RAG 보강 등에 사용됩니다. "
+                    "외부 연계 지점에서의 프롬프트 인젝션·공급망 공격이 주요 위협입니다."
+                ),
+                "page_range": "pp. 47–51",
+            },
+            {
+                "key": "대민서비스용 AI시스템의 내부망 연계",
+                "concept_fig": 28, "usecase_fig": 29,
+                "extra_figs": [],
+                "desc": (
+                    "일반 국민 대상 서비스를 제공하는 AI시스템. "
+                    "AI 민원 챗봇, 정보 제공 서비스 등에 적용됩니다. "
+                    "불특정 다수 사용자로부터의 악의적 입력 차단이 핵심입니다."
+                ),
+                "page_range": "pp. 52–55",
+            },
+            {
+                "key": "상용 AI서비스 활용",
+                "concept_fig": 30, "usecase_fig": 31,
+                "extra_figs": [],
+                "desc": (
+                    "ChatGPT·Claude 등 민간 상용 AI 서비스를 공공업무에 직접 활용하는 형태. "
+                    "업무 민감정보 외부 유출 방지와 상용 서비스 약관·보안 정책 검토가 필수입니다."
+                ),
+                "page_range": "pp. 56–59",
+            },
+        ]
+
+        bt_tabs = st.tabs([
+            f"① 내부망 전용",
+            f"② 외부망 연계",
+            f"③ 대민서비스",
+            f"④ 상용 AI",
+        ])
+
+        for bt_tab, bc in zip(bt_tabs, BUILD_CONFIGS):
+            with bt_tab:
+                st.markdown(f"#### {bc['key']}")
+                st.caption(bc["page_range"])
+                st.markdown(bc["desc"])
+
+                col_concept, col_case = st.columns(2)
+                with col_concept:
+                    st.markdown("**개념도**")
+                    _show_guide_fig(bc["concept_fig"])
+                with col_case:
+                    st.markdown("**활용 사례**")
+                    _show_guide_fig(bc["usecase_fig"])
+
+                for fig_n, fig_cap in bc.get("extra_figs", []):
+                    st.divider()
+                    _show_guide_fig(fig_n, fig_cap)
+
+                focus = next(
+                    (f for f in build_type_focuses if f["build_type"] == bc["key"]),
+                    None,
+                )
+                if focus:
+                    st.divider()
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        st.markdown("**중점 보안위협**")
+                        st.markdown(
+                            " ".join(_t_badge(tid) for tid in focus.get("priority_threats", [])),
+                            unsafe_allow_html=True,
+                        )
+                    with c2:
+                        st.markdown("**적용 보안대책**")
+                        st.markdown(
+                            " ".join(_m_badge(mid) for mid in focus.get("priority_measures", [])),
+                            unsafe_allow_html=True,
+                        )
+
+    # ── 5장: 특수 AI 유형 ─────────────────────────────────────
+    with tab_aitype:
+        st.markdown("### 에이전틱 AI (Agentic AI)")
+        st.markdown("""
+에이전틱 AI는 자율적으로 목표를 설정하고, 다수의 도구·외부 시스템을 연계하며,
+순차적 또는 병렬로 작업을 수행하는 AI시스템입니다.
+기존 챗봇 형태보다 훨씬 넓은 권한과 자율성을 가지므로 특별한 보안 고려가 필요합니다.
+""")
+        col_a1, col_a2 = st.columns(2)
+        with col_a1:
+            _show_guide_fig(32, "에이전틱 AI 개념도")
+        with col_a2:
+            _show_guide_fig(33, "에이전틱 AI를 활용한 행정 원스톱 서비스")
+
+        st.markdown("**에이전틱 AI 주요 보안 위협 사례**")
+        col_a3, col_a4 = st.columns(2)
+        with col_a3:
+            _show_guide_fig(34, "AI 메모리 오염 및 무단 권한 침해 사례")
+        with col_a4:
+            _show_guide_fig(35, "구성요소 취약점에 의한 악성행위 수행 사례")
+
+        # A-M measures summary
+        a_measures = sorted(
+            [m for m in kg.measures if m["id"].startswith("A-M")],
+            key=lambda x: int(re.findall(r'\d+', x["id"])[0]),
+        )
+        if a_measures:
+            with st.expander(f"에이전틱 AI 전용 보안대책 {len(a_measures)}개 보기"):
+                for m in a_measures:
+                    st.markdown(
+                        f"**{_m_badge(m['id'])}** {m['name']}  \n{m.get('description','')}",
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown("---")
+
+        st.divider()
+        st.markdown("### 피지컬 AI (Physical AI)")
+        st.markdown("""
+피지컬 AI는 물리적 환경과 상호작용하는 AI시스템으로, 로봇·드론·자율주행 차량·
+제조 자동화 장비 등에 탑재됩니다.
+오동작 시 인적·물적 피해가 직접 발생할 수 있어 높은 수준의 안전·보안 설계가 요구됩니다.
+""")
+        col_p1, col_p2 = st.columns(2)
+        with col_p1:
+            _show_guide_fig(36, "피지컬 AI 개념도")
+        with col_p2:
+            _show_guide_fig(37, "피지컬 AI를 활용한 현장설비 안전상태 진단 예시")
+
+        p_measures = sorted(
+            [m for m in kg.measures if m["id"].startswith("P-M")],
+            key=lambda x: int(re.findall(r'\d+', x["id"])[0]),
+        )
+        if p_measures:
+            with st.expander(f"피지컬 AI 전용 보안대책 {len(p_measures)}개 보기"):
+                for m in p_measures:
+                    st.markdown(
+                        f"**{_m_badge(m['id'])}** {m['name']}  \n{m.get('description','')}",
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown("---")
+
+    st.caption("참고: 국가정보원 「국가·공공기관 AI 보안 가이드북」 (2025.12)")
+
 
 # ═══════════════════════════════════════════════════════════
 # Page: MCP 연결
