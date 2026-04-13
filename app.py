@@ -90,86 +90,7 @@ with st.sidebar:
     st.title("🛡️ K-AISecMap")
 
     stats = kg.summary()
-    atlas_count = stats.get('atlas_techniques', 0)
-    st.caption(f"📊 {stats['total_threats']} 위협 · {stats['total_measures']} 대책 · {atlas_count} ATLAS 공격기법")
-
-    st.divider()
-
-    # 통합 지식맵 필터
-    st.markdown("**🗺️ 지식맵 필터**")
-    pair_choice = st.radio(
-        "표시할 매핑",
-        ["🔴 NIS 위협 ↔ 🔵 대책", "🟠 OWASP ↔ 🟣 ATLAS 공격기법"],
-        key="trinity_pair", label_visibility="collapsed",
-    )
-
-    st.divider()
-
-    # 노드 클릭 상세 정보 (그래프에서 선택된 노드)
-    sel_id = st.session_state.get("trinity_selected")
-    if sel_id:
-        cross = kg.get_cross_framework(sel_id)
-        if cross["framework"] == "NIS":
-            item = cross["item"]
-            st.markdown(f"##### {_t_badge(item['id'])} {item['name']}", unsafe_allow_html=True)
-            st.markdown(f"{item.get('definition', '')}")
-            st.markdown(f"**위험:** {item.get('risk', '')}")
-            if item.get("lifecycles"):
-                st.caption(f"수명주기: {' · '.join(item['lifecycles'])}")
-            if item.get("examples"):
-                with st.expander("실제 사례", expanded=False):
-                    for ex in item["examples"]:
-                        st.markdown(f"- {ex}")
-            if cross["atlas"]:
-                st.markdown("**ATLAS 공격기법**")
-                for a in cross["atlas"]:
-                    st.markdown(f"- {_atlas_badge(a['id'])} {a['name_ko']}", unsafe_allow_html=True)
-            if cross["owasp"]:
-                st.markdown("**OWASP**")
-                for o in cross["owasp"]:
-                    st.markdown(f"- {_owasp_badge(o['id'])} {o.get('name_ko', '')}", unsafe_allow_html=True)
-            if cross["nis_measures"]:
-                st.markdown("**대응 대책**")
-                st.markdown(" ".join(_m_badge(m["id"]) for m in cross["nis_measures"]), unsafe_allow_html=True)
-        elif cross["framework"] == "ATLAS":
-            item = cross["item"]
-            tactic_names = [kg.get_atlas_tactic(tid)["name_ko"] for tid in item.get("tactic_ids", []) if kg.get_atlas_tactic(tid)]
-            st.markdown(f"##### {_atlas_badge(item['id'])} {item['name_ko']}", unsafe_allow_html=True)
-            st.markdown(f"*{item['name']}*")
-            if tactic_names:
-                st.caption(f"전술: {' · '.join(tactic_names)}")
-            st.markdown(item.get("description", ""))
-            mapping = kg.get_atlas_mapping(item["id"]) or {}
-            if mapping.get("rationale"):
-                st.info(f"**매핑 근거:** {mapping['rationale']}")
-            if cross["nis_threats"]:
-                st.markdown("**NIS 위협**")
-                for t in cross["nis_threats"]:
-                    st.markdown(f"- {_t_badge(t['id'])} {t['name']}", unsafe_allow_html=True)
-            if cross["owasp"]:
-                st.markdown("**OWASP**")
-                for o in cross["owasp"]:
-                    st.markdown(f"- {_owasp_badge(o['id'])} {o.get('name_ko', '')}", unsafe_allow_html=True)
-            if cross["nis_measures"]:
-                st.markdown("**대응 대책**")
-                st.markdown(" ".join(_m_badge(m["id"]) for m in cross["nis_measures"]), unsafe_allow_html=True)
-            st.markdown(f"[ATLAS 원문 →]({item.get('url', '')})")
-        elif cross["framework"] == "OWASP":
-            item = cross["item"]
-            st.markdown(f"##### {_owasp_badge(item['id'])} {item.get('name_ko', item['name'])}", unsafe_allow_html=True)
-            st.markdown(f"*{item['name']}*")
-            st.markdown(item.get("description", "")[:150] + "…" if len(item.get("description", "")) > 150 else item.get("description", ""))
-            if cross["nis_threats"]:
-                st.markdown("**NIS 위협**")
-                for t in cross["nis_threats"]:
-                    st.markdown(f"- {_t_badge(t['id'])} {t['name']}", unsafe_allow_html=True)
-            if cross["atlas"]:
-                st.markdown("**ATLAS 공격기법**")
-                for a in cross["atlas"]:
-                    st.markdown(f"- {_atlas_badge(a['id'])} {a['name_ko']}", unsafe_allow_html=True)
-            if cross["nis_measures"]:
-                st.markdown("**대응 대책**")
-                st.markdown(" ".join(_m_badge(m["id"]) for m in cross["nis_measures"]), unsafe_allow_html=True)
+    st.caption(f"📊 {stats['total_threats']} 위협 · {stats['total_measures']} 대책 · {len(kg.incidents)} 사고사례 · {len(kg.atlas_case_studies)} ATLAS 사례연구")
 
     st.divider()
     st.markdown("📄 **관련 문서**")
@@ -293,23 +214,24 @@ NIS 위협(T##) ↔ ATLAS 기법(AML.T####) ↔ OWASP(LLM##)
     st.markdown("""
 **🗺️ AI 보안 프레임워크 통합 지도**
 
-아래 그래프는 세 가지 주요 AI 보안 프레임워크의 관계를 시각화합니다.
+아래 그래프는 AI 보안 프레임워크들의 관계를 시각화합니다.
 **선으로 연결된 노드**는 서로 관련된 보안 항목입니다. **노드를 클릭**하면 상세 정보를 확인할 수 있고,
 드래그하거나 스크롤하여 그래프를 탐색할 수 있습니다.
 
-| 색상 | 프레임워크 | 설명 |
-|------|-----------|------|
-| 🔴 빨강 | **NIS 보안위협** (T01~T15) | 국정원 가이드북이 정의한 AI 보안위협 |
-| 🟣 보라 | **ATLAS 공격기법** (AML.T0000) | MITRE가 분류한 AI 대상 실제 공격 기법 |
-| 🟠 주황 | **OWASP LLM Top 10** (LLM01~10) | LLM 애플리케이션 10대 취약점 |
+| 색상 | 유형 | 설명 |
+|------|------|------|
+| 🔴 빨간 원 | **NIS 보안위협** (T01~T15) | 국정원 가이드북이 정의한 AI 보안위협 |
+| ⭐ 빨간 별 | **NIS 사고사례** (INC01~) | 실제 발생한 AI 보안 사고 |
+| 🟣 보라 삼각 | **ATLAS 사례연구** (AML.CS) | MITRE가 수집한 실제 AI 공격 사례 |
+| 🟠 주황 사각 | **OWASP LLM Top 10** (LLM01~10) | LLM 10대 취약점 |
 """)
 
     try:
         from streamlit_agraph import agraph, Node, Edge, Config
 
         graph_data = kg.build_graph_data(
-            show_nis=True, show_atlas=True,
-            show_owasp=True, show_measures=False,
+            show_nis=True, show_owasp=True, show_measures=False,
+            show_incidents=True, show_case_studies=True,
         )
 
         agraph_nodes = []
@@ -403,10 +325,15 @@ with tab_explorer:
 # --- Tab 2: Trinity Knowledge Map ---
 with tab_trinity:
     st.subheader("통합 지식맵 — NIS + MITRE ATLAS + OWASP")
-    st.caption("← 사이드바에서 매핑 필터를 선택하세요. 그래프 노드를 클릭하면 사이드바에 상세 정보가 표시됩니다.")
+    st.caption("노드를 클릭하면 아래에 상세 정보가 표시됩니다. 드래그·스크롤로 그래프를 탐색하세요.")
 
-    # Read pair choice from sidebar radio
-    show_nis_pair = pair_choice.startswith("🔴")
+    # Inline filter
+    map_view = st.radio(
+        "표시할 매핑",
+        ["🔴 NIS 위협 ↔ 🔵 대책", "🟠 OWASP ↔ 🟣 ATLAS 사례연구 ↔ ⭐ 사고사례"],
+        key="trinity_pair", horizontal=True, label_visibility="collapsed",
+    )
+    show_nis_pair = map_view.startswith("🔴")
     show_ext_pair = not show_nis_pair
 
     view_graph, view_sankey = st.tabs(["🕸️ 네트워크 그래프", "🌊 Sankey 흐름도"])
@@ -417,8 +344,11 @@ with tab_trinity:
             from streamlit_agraph import agraph, Node, Edge, Config
 
             graph_data = kg.build_graph_data(
-                show_nis=show_nis_pair, show_atlas=show_ext_pair,
-                show_owasp=show_ext_pair, show_measures=show_nis_pair,
+                show_nis=True,
+                show_owasp=show_ext_pair,
+                show_measures=show_nis_pair,
+                show_incidents=show_ext_pair,
+                show_case_studies=show_ext_pair,
             )
 
             agraph_nodes = []
@@ -442,14 +372,22 @@ with tab_trinity:
             )
 
             # Legend
-            st.markdown(
-                '<span style="font-size:0.85em;">'
-                '<span style="display:inline-block;width:12px;height:12px;background:#ed1c24;border-radius:50%;vertical-align:middle;"></span> <b>NIS 위협</b> &nbsp; '
-                '<span style="display:inline-block;width:12px;height:12px;background:#2f55a5;transform:rotate(45deg);vertical-align:middle;"></span> <b>NIS 대책</b> &nbsp; '
-                '<span style="display:inline-block;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:12px solid #7b2d8e;vertical-align:middle;"></span> <b>ATLAS 공격기법</b> &nbsp; '
-                '<span style="display:inline-block;width:12px;height:12px;background:#f58220;vertical-align:middle;"></span> <b>OWASP</b>'
-                '</span>', unsafe_allow_html=True,
-            )
+            if show_nis_pair:
+                st.markdown(
+                    '<span style="font-size:0.85em;">'
+                    '<span style="display:inline-block;width:12px;height:12px;background:#ed1c24;border-radius:50%;vertical-align:middle;"></span> <b>NIS 위협</b> &nbsp; '
+                    '<span style="display:inline-block;width:12px;height:12px;background:#2f55a5;transform:rotate(45deg);vertical-align:middle;"></span> <b>NIS 대책</b>'
+                    '</span>', unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    '<span style="font-size:0.85em;">'
+                    '<span style="display:inline-block;width:12px;height:12px;background:#ed1c24;border-radius:50%;vertical-align:middle;"></span> <b>NIS 위협</b> &nbsp; '
+                    '<span style="display:inline-block;width:12px;height:12px;background:#e74c3c;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);vertical-align:middle;"></span> <b>NIS 사고사례</b> &nbsp; '
+                    '<span style="display:inline-block;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:12px solid #9b59b6;vertical-align:middle;"></span> <b>ATLAS 사례연구</b> &nbsp; '
+                    '<span style="display:inline-block;width:12px;height:12px;background:#f58220;vertical-align:middle;"></span> <b>OWASP</b>'
+                    '</span>', unsafe_allow_html=True,
+                )
 
             selected = agraph(nodes=agraph_nodes, edges=agraph_edges, config=config)
             if selected:
@@ -491,44 +429,59 @@ with tab_trinity:
                     link_colors.append("rgba(47,85,165,0.3)")
 
         if show_ext_pair:
-            # ATLAS 공격기법 → OWASP (via shared NIS threats)
-            for am in kg._atlas_mapping:
-                tech = kg.get_atlas_technique(am["atlas_id"])
-                if not tech:
+            # ATLAS Case Study → NIS 위협 (via technique mapping)
+            for cs in kg.atlas_case_studies:
+                threat_ids = kg._case_study_threats.get(cs["id"], [])
+                if not threat_ids:
                     continue
-                src_label = f"{tech['id']} {_strip_ai(tech['name_ko'])}"
-                for oid in am.get("owasp_ids", []):
-                    o = kg.get_owasp(oid)
-                    if o:
-                        tgt_label = f"{o['id']} {_strip_ai(o['name_ko'])}"
-                        sources.append(_get_idx(src_label))
-                        targets.append(_get_idx(tgt_label))
-                        values.append(2)
-                        link_colors.append("rgba(123,45,142,0.3)")
-
-            # Also show OWASP → NIS 위협 connections (one-hop context)
-            # These go from OWASP to the NIS threats they map to
-            for om in kg._owasp_mapping:
-                o = kg.get_owasp(om["owasp_id"])
-                if not o:
-                    continue
-                src_label = f"{o['id']} {_strip_ai(o['name_ko'])}"
-                for tid in om.get("threat_ids", []):
+                src_label = f"{cs['id'][:8]} {_strip_ai(cs['name_ko'])}"
+                for tid in threat_ids:
                     t = kg.get_threat(tid)
                     if t:
                         tgt_label = f"{t['id']} {_strip_ai(t['name'])}"
                         sources.append(_get_idx(src_label))
                         targets.append(_get_idx(tgt_label))
+                        values.append(2)
+                        link_colors.append("rgba(155,89,182,0.3)")
+
+            # NIS 위협 → OWASP
+            for om in kg._owasp_mapping:
+                o = kg.get_owasp(om["owasp_id"])
+                if not o:
+                    continue
+                tgt_label = f"{o['id']} {_strip_ai(o['name_ko'])}"
+                for tid in om.get("threat_ids", []):
+                    t = kg.get_threat(tid)
+                    if t:
+                        src_label = f"{t['id']} {_strip_ai(t['name'])}"
+                        sources.append(_get_idx(src_label))
+                        targets.append(_get_idx(tgt_label))
                         values.append(1)
                         link_colors.append("rgba(245,130,32,0.3)")
+
+            # NIS 위협 → NIS 사고사례
+            for inc in kg.incidents:
+                for tid in inc.get("threat_ids", []):
+                    t = kg.get_threat(tid)
+                    if t:
+                        src_label = f"{t['id']} {_strip_ai(t['name'])}"
+                        tgt_label = f"{inc['id']} {inc['title'][:12]}"
+                        sources.append(_get_idx(src_label))
+                        targets.append(_get_idx(tgt_label))
+                        values.append(1)
+                        link_colors.append("rgba(231,76,60,0.3)")
 
         # 노드 색상
         node_colors = []
         for lbl in labels:
-            if lbl.startswith("AML."):
+            if lbl.startswith("AML.CS"):
+                node_colors.append("#9b59b6")
+            elif lbl.startswith("AML."):
                 node_colors.append("#7b2d8e")
             elif lbl.startswith("LLM"):
                 node_colors.append("#f58220")
+            elif lbl.startswith("INC"):
+                node_colors.append("#e74c3c")
             elif lbl.startswith("T"):
                 node_colors.append("#ed1c24")
             elif lbl.startswith("M") or lbl.startswith("A-M") or lbl.startswith("P-M"):
@@ -551,7 +504,7 @@ with tab_trinity:
                     color=link_colors,
                 ),
             ))
-            sankey_title = "NIS 위협 → 대책" if show_nis_pair else "ATLAS 공격기법 → OWASP → NIS 위협"
+            sankey_title = "NIS 위협 → 대책" if show_nis_pair else "ATLAS 사례연구 → NIS 위협 → OWASP / 사고사례"
             fig.update_layout(
                 title=dict(text=sankey_title, font=dict(size=14)),
                 height=800,
@@ -560,7 +513,75 @@ with tab_trinity:
             )
             st.plotly_chart(fig, use_container_width=True)
         else:
-            st.info("위에서 표시할 프레임워크를 선택하세요.")
+            st.info("위에서 표시할 매핑을 선택하세요.")
+
+    # ── Node click detail (inline, below graph/sankey) ─────────────────
+    sel_id = st.session_state.get("trinity_selected")
+    if sel_id:
+        st.divider()
+        # NIS Threat
+        if sel_id in kg._threat_by_id:
+            item = kg._threat_by_id[sel_id]
+            st.markdown(f"### {_t_badge(item['id'])} {item['name']}", unsafe_allow_html=True)
+            st.markdown(item.get("definition", ""))
+            st.markdown(f"**위험:** {item.get('risk', '')}")
+            if item.get("lifecycles"):
+                st.caption(f"수명주기: {' · '.join(item['lifecycles'])}")
+            # Related incidents
+            inc_ids = kg._incidents_for_threat.get(sel_id, [])
+            if inc_ids:
+                st.markdown("**🔴 관련 사고사례**")
+                for iid in inc_ids:
+                    inc = kg._incident_by_id[iid]
+                    st.markdown(f"- **{inc['title']}** ({inc['year']}) — {inc['description'][:80]}…")
+            # Related OWASP
+            owasp_list = kg.get_owasp_for_threat(sel_id)
+            if owasp_list:
+                st.markdown("**🟠 OWASP 매핑:** " + " ".join(f"{_owasp_badge(o['id'])}" for o in owasp_list), unsafe_allow_html=True)
+            # Related measures
+            measures = kg.get_measures_for_threat(sel_id)
+            if measures:
+                st.markdown("**🔵 대응 대책:** " + " ".join(_m_badge(m["id"]) for m in measures), unsafe_allow_html=True)
+        # NIS Incident
+        elif sel_id in kg._incident_by_id:
+            inc = kg._incident_by_id[sel_id]
+            st.markdown(f"### ⭐ {inc['title']}")
+            st.markdown(f"**{inc['year']}년** · {inc.get('source', '')}")
+            st.markdown(inc["description"])
+            threat_badges = " ".join(_t_badge(tid) for tid in inc.get("threat_ids", []))
+            st.markdown(f"**관련 위협:** {threat_badges}", unsafe_allow_html=True)
+        # ATLAS Case Study
+        elif sel_id in kg._case_study_by_id:
+            cs = kg._case_study_by_id[sel_id]
+            st.markdown(f"### 🟣 {cs['name_ko']}")
+            st.markdown(f"*{cs['name']}*")
+            threat_ids = kg._case_study_threats.get(sel_id, [])
+            if threat_ids:
+                badges = " ".join(_t_badge(tid) for tid in threat_ids)
+                st.markdown(f"**관련 NIS 위협:** {badges}", unsafe_allow_html=True)
+            st.markdown(f"[ATLAS 원문 →]({cs.get('url', '')})")
+        # OWASP
+        elif sel_id in kg._owasp_by_id:
+            item = kg._owasp_by_id[sel_id]
+            st.markdown(f"### {_owasp_badge(item['id'])} {item.get('name_ko', item['name'])}", unsafe_allow_html=True)
+            st.markdown(f"*{item['name']}*")
+            st.markdown(item.get("description", "")[:200] + "…" if len(item.get("description", "")) > 200 else item.get("description", ""))
+            nis = kg.get_nis_for_owasp(sel_id)
+            if nis["threats"]:
+                st.markdown("**NIS 위협:** " + " ".join(_t_badge(t["id"]) for t in nis["threats"]), unsafe_allow_html=True)
+            if nis["measures"]:
+                st.markdown("**대응 대책:** " + " ".join(_m_badge(m["id"]) for m in nis["measures"]), unsafe_allow_html=True)
+        # NIS Measure
+        elif sel_id in kg._measure_by_id:
+            item = kg._measure_by_id[sel_id]
+            st.markdown(f"### {_m_badge(item['id'])} {item['name']}", unsafe_allow_html=True)
+            st.markdown(item["description"])
+            if item.get("details"):
+                for d in item["details"]:
+                    st.markdown(f"- {d}")
+            related = kg.get_threats_for_measure(sel_id)
+            if related:
+                st.markdown("**대응 위협:** " + " ".join(_t_badge(t["id"]) for t in related), unsafe_allow_html=True)
 
 # --- Tab 3: OWASP LLM Top 10 ---
 with tab_owasp:

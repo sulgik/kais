@@ -52,6 +52,24 @@ class SecurityKnowledgeGraph:
             self._measures_for_threat.setdefault(link["threat_id"], []).append(link["measure_id"])
             self._threats_for_measure.setdefault(link["measure_id"], []).append(link["threat_id"])
 
+        # NIS Incidents index: incident -> threats
+        self._incident_by_id = {i["id"]: i for i in self.incidents}
+        self._incidents_for_threat = {}
+        for inc in self.incidents:
+            for tid in inc.get("threat_ids", []):
+                self._incidents_for_threat.setdefault(tid, []).append(inc["id"])
+
+        # ATLAS Case Studies index: case_study -> NIS threats (via technique -> mapping)
+        self._case_study_by_id = {cs["id"]: cs for cs in self.atlas_case_studies}
+        self._case_study_threats = {}  # cs_id -> [threat_ids]
+        for cs in self.atlas_case_studies:
+            threat_ids = set()
+            for tech_id in cs.get("technique_ids", []):
+                mapping = self._atlas_map_by_id.get(tech_id, {})
+                for tid in mapping.get("threat_ids", []):
+                    threat_ids.add(tid)
+            self._case_study_threats[cs["id"]] = sorted(threat_ids)
+
     def _load(self, path: Path) -> list[dict]:
         with open(path, encoding="utf-8") as f:
             return json.load(f)
@@ -254,8 +272,9 @@ class SecurityKnowledgeGraph:
 
         return result
 
-    def build_graph_data(self, show_nis: bool = True, show_atlas: bool = True,
-                         show_owasp: bool = True, show_measures: bool = False) -> dict:
+    def build_graph_data(self, show_nis: bool = True, show_owasp: bool = True,
+                         show_measures: bool = False, show_incidents: bool = True,
+                         show_case_studies: bool = True) -> dict:
         """Build nodes and edges for streamlit-agraph visualization."""
         nodes = []
         edges = []
@@ -269,30 +288,34 @@ class SecurityKnowledgeGraph:
                     "shape": shape, "size": size, "group": group, "title": title,
                 })
 
-        # NIS Threats
+        def _strip_ai(s):
+            return s.replace('AI ', '').replace('AI', '')
+
+        # NIS Threats (central hub)
         if show_nis:
             for t in self.threats:
-                short = t['name'].replace('AI ', '').replace('AI', '')
-                _add_node(t["id"], f"{t['id']}\n{short}", "#ed1c24", "dot", 25, "NIS Threat", t["name"])
+                _add_node(t["id"], f"{t['id']}\n{_strip_ai(t['name'])}", "#ed1c24", "dot", 25, "NIS 위협", t["name"])
 
         # OWASP
         if show_owasp:
             for o in self.owasp:
-                short = o['name_ko'].replace('AI ', '').replace('AI', '')
-                _add_node(o["id"], f"{o['id']}\n{short}", "#f58220", "square", 22, "OWASP", o["name"])
+                _add_node(o["id"], f"{o['id']}\n{_strip_ai(o['name_ko'])}", "#f58220", "square", 22, "OWASP", o["name"])
 
-        # ATLAS Techniques (only mapped ones)
-        if show_atlas:
-            for am in self._atlas_mapping:
-                tech = self._atlas_tech_by_id.get(am["atlas_id"])
-                if tech:
-                    short = tech['name_ko'].replace('AI ', '').replace('AI', '')
-                    _add_node(tech["id"], f"{tech['id']}\n{short}", "#7b2d8e", "triangle", 20, "ATLAS", tech["name"])
-
-        # NIS Measures (optional, can be noisy)
+        # NIS Measures
         if show_measures and show_nis:
             for m in self.measures:
-                _add_node(m["id"], f"{m['id']}\n{m['name'][:8]}", "#2f55a5", "diamond", 12, "NIS Measure", m["name"])
+                _add_node(m["id"], f"{m['id']}\n{m['name'][:8]}", "#2f55a5", "diamond", 12, "NIS 대책", m["name"])
+
+        # NIS Incidents (사고사례)
+        if show_incidents and show_nis:
+            for inc in self.incidents:
+                _add_node(inc["id"], f"{inc['id']}\n{inc['title'][:10]}", "#e74c3c", "star", 18, "NIS 사고사례", inc["title"])
+
+        # ATLAS Case Studies (사례연구)
+        if show_case_studies:
+            for cs in self.atlas_case_studies:
+                if self._case_study_threats.get(cs["id"]):  # only if linked to NIS threats
+                    _add_node(cs["id"], f"{cs['id'][:6]}..\n{cs['name_ko'][:10]}", "#9b59b6", "triangle", 18, "ATLAS 사례연구", cs["name_ko"])
 
         # --- Edges ---
         # NIS Threat <-> NIS Measure
@@ -309,21 +332,31 @@ class SecurityKnowledgeGraph:
                     if oid in seen_nodes and tid in seen_nodes:
                         edges.append({"source": tid, "target": oid, "color": "#f58220", "width": 2, "dashes": True})
 
-        # NIS Threat <-> ATLAS Technique
-        if show_nis and show_atlas:
-            for am in self._atlas_mapping:
-                aid = am["atlas_id"]
-                for tid in am.get("threat_ids", []):
-                    if aid in seen_nodes and tid in seen_nodes:
-                        edges.append({"source": tid, "target": aid, "color": "#7b2d8e", "width": 2, "dashes": True})
+        # NIS Threat <-> NIS Incident
+        if show_incidents and show_nis:
+            for inc in self.incidents:
+                for tid in inc.get("threat_ids", []):
+                    if inc["id"] in seen_nodes and tid in seen_nodes:
+                        edges.append({"source": tid, "target": inc["id"], "color": "#e74c3c", "width": 1})
 
-        # ATLAS <-> OWASP (via shared NIS threats)
-        if show_atlas and show_owasp:
-            for am in self._atlas_mapping:
-                aid = am["atlas_id"]
-                for oid in am.get("owasp_ids", []):
-                    if aid in seen_nodes and oid in seen_nodes:
-                        edges.append({"source": aid, "target": oid, "color": "#cc6600", "width": 1, "dashes": [5, 5]})
+        # ATLAS Case Study <-> NIS Threat (via technique mapping)
+        if show_case_studies and show_nis:
+            for cs in self.atlas_case_studies:
+                for tid in self._case_study_threats.get(cs["id"], []):
+                    if cs["id"] in seen_nodes and tid in seen_nodes:
+                        edges.append({"source": tid, "target": cs["id"], "color": "#9b59b6", "width": 2, "dashes": True})
+
+        # ATLAS Case Study <-> OWASP (via technique -> mapping -> owasp_ids)
+        if show_case_studies and show_owasp:
+            for cs in self.atlas_case_studies:
+                owasp_ids = set()
+                for tech_id in cs.get("technique_ids", []):
+                    mapping = self._atlas_map_by_id.get(tech_id, {})
+                    for oid in mapping.get("owasp_ids", []):
+                        owasp_ids.add(oid)
+                for oid in owasp_ids:
+                    if cs["id"] in seen_nodes and oid in seen_nodes:
+                        edges.append({"source": cs["id"], "target": oid, "color": "#cc6600", "width": 1, "dashes": [5, 5]})
 
         return {"nodes": nodes, "edges": edges}
 
