@@ -129,13 +129,13 @@ def show_threat_image(threat_id: str):
             st.image(str(img_path), use_container_width=True)
 
 
-def _show_guide_fig(n: int, caption: str = ""):
+def _show_guide_fig(n: int, caption: str = "", width: int = 480):
     """Display a guide figure by its 1-based number from the PDF figure manifest."""
     fn = _GUIDE_FIG_FILES.get(n)
     if fn:
         p = GUIDE_FIGURES_DIR / fn
         if p.exists():
-            st.image(str(p), use_container_width=True)
+            st.image(str(p), width=width)
             if caption:
                 st.caption(f"[그림 {n}] {caption}")
 
@@ -999,16 +999,15 @@ elif page == "guidebook":
             )
             for t in threats_list:
                 is_sel = st.session_state.get("guide_threat") == t["id"]
-                short = t["name"][:11] + ("…" if len(t["name"]) > 11 else "")
-                label_html = (
-                    f'<div style="padding:5px 8px;border-radius:5px;font-size:0.78rem;'
-                    f'{"background:rgba(237,28,36,0.10);color:#c0101a;font-weight:700;" if is_sel else "color:#444;"}'
-                    f'">{_t_badge(t["id"])} {short}</div>'
+                btn_style = (
+                    "background:rgba(237,28,36,0.10);color:#c0101a;font-weight:700;"
+                    if is_sel else ""
                 )
-                st.markdown(label_html, unsafe_allow_html=True)
                 if st.button(
-                    t["name"], key=f"guide_t_{t['id']}",
-                    label_visibility="collapsed", use_container_width=True
+                    f"{t['id']}  {t['name']}",
+                    key=f"guide_t_{t['id']}",
+                    use_container_width=True,
+                    type="primary" if is_sel else "secondary",
                 ):
                     st.session_state["guide_threat"] = t["id"]
                     st.session_state.pop("guide_show_matrix", None)
