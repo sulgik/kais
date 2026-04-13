@@ -251,8 +251,8 @@ with st.sidebar:
     stats = kg.summary()
     st.markdown(
         f'<div style="font-size:0.7rem;color:#5a7a9a;line-height:1.8;padding:0 4px;">'
-        f'{stats["total_threats"]} NIS 위협 · {stats["atlas_techniques"]} ATLAS 기법 · {stats["atlas_case_studies"]} 사례연구<br>'
-        f'{stats["total_measures"]} 대책 · {stats["atlas_mitigations"]} ATLAS 완화책 · {stats["nist_functions"]} NIST 기능<br>'
+        f'{stats.get("total_threats",0)} NIS 위협 · {stats.get("atlas_techniques",0)} ATLAS 기법 · {stats.get("atlas_case_studies",0)} 사례연구<br>'
+        f'{stats.get("total_measures",0)} 대책 · {stats.get("atlas_mitigations",0)} ATLAS 완화책 · {stats.get("nist_functions",0)} NIST 기능<br>'
         f'<a href="https://k-ai-sec.streamlit.app" style="color:#5a7a9a;">k-ai-sec.streamlit.app</a> · '
         f'<a href="https://github.com/sulgik/kais" style="color:#5a7a9a;">GitHub</a>'
         f'</div>', unsafe_allow_html=True
