@@ -85,22 +85,48 @@ def show_threat_image(threat_id: str):
             st.image(str(img_path), use_container_width=True)
 
 
-# --- Sidebar ---
+# --- Sidebar (navigation) ---
 with st.sidebar:
-    st.title("🛡️ K-AISecMap")
+    st.markdown("""
+<div style="padding:4px 0 12px;">
+  <div style="font-size:1.3rem;font-weight:900;letter-spacing:-0.5px;color:#1a1a2e;">K-AISecMap</div>
+  <div style="font-size:0.72rem;color:#888;margin-top:2px;line-height:1.4;">
+    AI Security Mapping Advisor
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
-    stats = kg.summary()
-    st.caption(f"📊 {stats['total_threats']} 위협 · {stats['total_measures']} 대책 · {len(kg.incidents)} 사고사례 · {len(kg.atlas_case_studies)} ATLAS 사례연구")
+    st.divider()
+
+    MENU_ITEMS = [
+        ("🏠", "홈",                "home"),
+        ("🔍", "지식 탐색",         "explorer"),
+        ("🌐", "OWASP LLM Top 10", "owasp"),
+        ("🔥", "사고 사례",         "incidents"),
+        ("✅", "체크리스트",        "checklist"),
+        ("🔌", "MCP 연결",         "mcp"),
+    ]
+    menu_labels = [f"{icon}  {label}" for icon, label, _ in MENU_ITEMS]
+    menu_keys   = [key for _, _, key in MENU_ITEMS]
+
+    selected_label = st.radio(
+        "메뉴",
+        menu_labels,
+        label_visibility="collapsed",
+    )
+    page = menu_keys[menu_labels.index(selected_label)]
 
     st.divider()
     st.markdown("📄 **관련 문서**")
     st.markdown("- [NIS AI보안 가이드북](https://www.nis.go.kr)")
     st.markdown("- [OWASP LLM Top 10](https://genai.owasp.org/)")
     st.markdown("- [MITRE ATLAS](https://atlas.mitre.org/)")
-    st.caption("Made by [sulgik@gmail.com](mailto:sulgik@gmail.com)")
+    st.divider()
+    stats = kg.summary()
+    st.caption(f"📊 {stats['total_threats']} 위협 · {stats['total_measures']} 대책 · {len(kg.incidents)} 사고사례")
+    st.caption("[k-ai-sec.streamlit.app](https://k-ai-sec.streamlit.app) · [github.com/sulgik/kais](https://github.com/sulgik/kais)")
 
-
-# --- Main area ---
+# --- Title ---
 st.markdown("""
 <div style="padding:16px 0 12px;">
   <div style="font-size:2.2rem; font-weight:900; letter-spacing:-1.5px; color:#1a1a2e; line-height:1.15;">
@@ -117,155 +143,421 @@ st.warning(
     "NIS AI보안 가이드북(2025.12) 기반으로 생성되며 공식 보안 검토를 대체하지 않습니다.",
     icon="⚠️",
 )
+st.divider()
 
-# --- Tabs ---
-tab_home, tab_explorer, tab_trinity, tab_owasp, tab_incidents, tab_checklist, tab_mcp = st.tabs(
-    ["홈", "🔍 지식 탐색", "🗺️ 통합 지식맵", "🌐 OWASP LLM Top 10", "🔥 사고 사례", "✅ 체크리스트", "🔌 MCP 연결"]
-)
+# ═══════════════════════════════════════════════════════════
+# Helper: Node detail panel (reused on home page)
+# ═══════════════════════════════════════════════════════════
+def _render_node_detail(sel_id: str):
+    """Render detail for a selected graph node."""
+    if not sel_id:
+        return
+    # NIS Threat
+    if sel_id in kg._threat_by_id:
+        item = kg._threat_by_id[sel_id]
+        st.markdown(f"### {_t_badge(item['id'])} {item['name']}", unsafe_allow_html=True)
+        st.markdown(item.get("definition", ""))
+        st.markdown(f"**위험:** {item.get('risk', '')}")
+        if item.get("lifecycles"):
+            st.caption(f"수명주기: {' · '.join(item['lifecycles'])}")
+        show_threat_image(sel_id)
+        inc_ids = kg._incidents_for_threat.get(sel_id, [])
+        if inc_ids:
+            st.markdown("**🔴 관련 사고사례**")
+            for iid in inc_ids:
+                inc = kg._incident_by_id[iid]
+                st.markdown(f"- **{inc['title']}** ({inc['year']}) — {inc['description'][:80]}…")
+        owasp_list = kg.get_owasp_for_threat(sel_id)
+        if owasp_list:
+            st.markdown("**🟠 OWASP 매핑:** " + " ".join(f"{_owasp_badge(o['id'])}" for o in owasp_list), unsafe_allow_html=True)
+        measures = kg.get_measures_for_threat(sel_id)
+        if measures:
+            st.markdown("**🔵 대응 대책:** " + " ".join(_m_badge(m["id"]) for m in measures), unsafe_allow_html=True)
+    # NIS Incident
+    elif sel_id in kg._incident_by_id:
+        inc = kg._incident_by_id[sel_id]
+        st.markdown(f"### ⭐ {inc['title']}")
+        st.markdown(f"**{inc['year']}년** · {inc.get('source', '')}")
+        st.markdown(inc["description"])
+        img_key = inc.get("image")
+        if img_key and img_key in image_index:
+            img_path = IMAGE_DIR / image_index[img_key]
+            if img_path.exists():
+                st.image(str(img_path), width=500)
+        threat_badges = " ".join(_t_badge(tid) for tid in inc.get("threat_ids", []))
+        st.markdown(f"**관련 위협:** {threat_badges}", unsafe_allow_html=True)
+    # ATLAS Case Study
+    elif sel_id in kg._case_study_by_id:
+        cs = kg._case_study_by_id[sel_id]
+        st.markdown(f"### 🟣 {cs['name_ko']}")
+        st.markdown(f"*{cs['name']}*")
+        threat_ids = kg._case_study_threats.get(sel_id, [])
+        if threat_ids:
+            badges = " ".join(_t_badge(tid) for tid in threat_ids)
+            st.markdown(f"**관련 NIS 위협:** {badges}", unsafe_allow_html=True)
+        st.markdown(f"[ATLAS 원문 →]({cs.get('url', '')})")
+    # OWASP
+    elif sel_id in kg._owasp_by_id:
+        item = kg._owasp_by_id[sel_id]
+        st.markdown(f"### {_owasp_badge(item['id'])} {item.get('name_ko', item['name'])}", unsafe_allow_html=True)
+        st.markdown(f"*{item['name']}*")
+        st.markdown(item.get("description", "")[:200] + "…" if len(item.get("description", "")) > 200 else item.get("description", ""))
+        nis = kg.get_nis_for_owasp(sel_id)
+        if nis["threats"]:
+            st.markdown("**NIS 위협:** " + " ".join(_t_badge(t["id"]) for t in nis["threats"]), unsafe_allow_html=True)
+        if nis["measures"]:
+            st.markdown("**대응 대책:** " + " ".join(_m_badge(m["id"]) for m in nis["measures"]), unsafe_allow_html=True)
+    # NIS Measure
+    elif sel_id in kg._measure_by_id:
+        item = kg._measure_by_id[sel_id]
+        st.markdown(f"### {_m_badge(item['id'])} {item['name']}", unsafe_allow_html=True)
+        st.markdown(item["description"])
+        if item.get("details"):
+            for d in item["details"]:
+                st.markdown(f"- {d}")
+        related = kg.get_threats_for_measure(sel_id)
+        if related:
+            st.markdown("**대응 위협:** " + " ".join(_t_badge(t["id"]) for t in related), unsafe_allow_html=True)
 
-# --- Tab 0: Home ---
-with tab_home:
-    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
+# ═══════════════════════════════════════════════════════════
+# Helper: Build Sankey figure
+# ═══════════════════════════════════════════════════════════
+def _build_sankey(show_nis_pair: bool, show_ext_pair: bool):
+    """Build and return a plotly Sankey figure."""
+    import plotly.graph_objects as go
+
+    labels = []
+    label_idx = {}
+
+    def _strip_ai(s):
+        return s.replace('AI ', '').replace('AI', '')
+
+    def _get_idx(label):
+        if label not in label_idx:
+            label_idx[label] = len(labels)
+            labels.append(label)
+        return label_idx[label]
+
+    sources, targets, values, link_colors = [], [], [], []
+
+    if show_nis_pair:
+        for link in kg.links:
+            t = kg.get_threat(link["threat_id"])
+            m = kg.get_measure(link["measure_id"])
+            if t and m:
+                src_label = f"{t['id']} {_strip_ai(t['name'])}"
+                tgt_label = f"{m['id']} {_strip_ai(m['name'])}"
+                sources.append(_get_idx(src_label))
+                targets.append(_get_idx(tgt_label))
+                values.append(1)
+                link_colors.append("rgba(47,85,165,0.3)")
+
+    if show_ext_pair:
+        for cs in kg.atlas_case_studies:
+            threat_ids = kg._case_study_threats.get(cs["id"], [])
+            if not threat_ids:
+                continue
+            src_label = f"{cs['id'][:8]} {_strip_ai(cs['name_ko'])}"
+            for tid in threat_ids:
+                t = kg.get_threat(tid)
+                if t:
+                    tgt_label = f"{t['id']} {_strip_ai(t['name'])}"
+                    sources.append(_get_idx(src_label))
+                    targets.append(_get_idx(tgt_label))
+                    values.append(2)
+                    link_colors.append("rgba(155,89,182,0.3)")
+
+        for om in kg._owasp_mapping:
+            o = kg.get_owasp(om["owasp_id"])
+            if not o:
+                continue
+            tgt_label = f"{o['id']} {_strip_ai(o['name_ko'])}"
+            for tid in om.get("threat_ids", []):
+                t = kg.get_threat(tid)
+                if t:
+                    src_label = f"{t['id']} {_strip_ai(t['name'])}"
+                    sources.append(_get_idx(src_label))
+                    targets.append(_get_idx(tgt_label))
+                    values.append(1)
+                    link_colors.append("rgba(245,130,32,0.3)")
+
+        for inc in kg.incidents:
+            for tid in inc.get("threat_ids", []):
+                t = kg.get_threat(tid)
+                if t:
+                    src_label = f"{t['id']} {_strip_ai(t['name'])}"
+                    tgt_label = f"{inc['id']} {inc['title'][:12]}"
+                    sources.append(_get_idx(src_label))
+                    targets.append(_get_idx(tgt_label))
+                    values.append(1)
+                    link_colors.append("rgba(231,76,60,0.3)")
+
+    node_colors = []
+    for lbl in labels:
+        if lbl.startswith("AML.CS"):
+            node_colors.append("#9b59b6")
+        elif lbl.startswith("AML."):
+            node_colors.append("#7b2d8e")
+        elif lbl.startswith("LLM"):
+            node_colors.append("#f58220")
+        elif lbl.startswith("INC"):
+            node_colors.append("#e74c3c")
+        elif lbl.startswith("T"):
+            node_colors.append("#ed1c24")
+        elif lbl.startswith("M") or lbl.startswith("A-M") or lbl.startswith("P-M"):
+            node_colors.append("#2f55a5")
+        else:
+            node_colors.append("#888")
+
+    if not sources:
+        return None
+
+    fig = go.Figure(go.Sankey(
+        arrangement="snap",
+        node=dict(
+            pad=14, thickness=20,
+            label=labels,
+            color=node_colors,
+            line=dict(color="white", width=0.5),
+        ),
+        textfont=dict(size=13, color="#000000", family="sans-serif"),
+        link=dict(
+            source=sources, target=targets, value=values,
+            color=link_colors,
+        ),
+    ))
+    sankey_title = "NIS 위협 → 대책" if show_nis_pair else "ATLAS 사례연구 → NIS 위협 → OWASP / 사고사례"
+    fig.update_layout(
+        title=dict(text=sankey_title, font=dict(size=14)),
+        height=800,
+        margin=dict(l=10, r=10, t=40, b=10),
+        font=dict(size=11, color="#000000"),
+    )
+    return fig
+
+
+# ═══════════════════════════════════════════════════════════
+# HTML Checklist Generator (module-level helper)
+# ═══════════════════════════════════════════════════════════
+def _generate_checklist_html(cl_build: str, cl_ai: str, result: dict) -> str:
+    """Generate a standalone HTML checklist page."""
+    generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
+    threat_rows = ""
+    for t_ in result["threats"]:
+        threat_rows += f'<tr><td><span class="badge badge-threat">{t_["id"]}</span></td><td><strong>{t_["name"]}</strong></td><td>{t_.get("risk","")}</td></tr>'
+    checklist_rows = ""
+    for m_ in result["measures"]:
+        label = m_.get("checklist") or m_["name"]
+        checklist_rows += f'<tr><td class="check-cell"><input type="checkbox" id="chk_{m_["id"]}"></td><td><label for="chk_{m_["id"]}"><span class="badge badge-measure">{m_["id"]}</span></label></td><td><label for="chk_{m_["id"]}">{label}</label></td></tr>'
+    return f"""<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>K-AISecMap 체크리스트 — {cl_build} + {cl_ai}</title>
+<style>
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;font-size:14px;background:#f5f7fa;color:#1a1a2e;padding:24px}}
+.page{{max-width:900px;margin:0 auto;background:#fff;border:2px solid #2f55a5;border-radius:10px;padding:32px 36px}}
+.header{{border-bottom:3px solid #2f55a5;padding-bottom:16px;margin-bottom:20px}}
+.header h1{{font-size:22px;color:#2f55a5;letter-spacing:-0.5px}}
+.header h2{{font-size:15px;font-weight:normal;color:#555;margin-top:4px}}
+.meta-grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:#f0f4ff;border:1px solid #c5d3f5;border-radius:8px;padding:14px 18px;margin-bottom:20px}}
+.meta-item label{{font-size:11px;color:#777;display:block;margin-bottom:2px}}
+.meta-item span{{font-size:14px;font-weight:bold;color:#1a1a2e}}
+.warning{{background:#fff8e1;border-left:4px solid #f0a500;border-radius:4px;padding:10px 14px;font-size:12px;color:#7a5c00;margin-bottom:24px;line-height:1.6}}
+h3{{font-size:15px;color:#2f55a5;margin:20px 0 10px;padding-left:8px;border-left:4px solid #2f55a5}}
+table{{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:13px}}
+th{{background:#2f55a5;color:#fff;padding:8px 10px;text-align:left;font-size:12px}}
+td{{padding:8px 10px;border-bottom:1px solid #e8eaf0;vertical-align:top;line-height:1.5}}
+tr:hover td{{background:#f5f7ff}}
+.check-cell{{width:32px;text-align:center}}
+input[type="checkbox"]{{width:16px;height:16px;cursor:pointer;accent-color:#2f55a5}}
+.badge{{display:inline-block;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:12px;white-space:nowrap}}
+.badge-threat{{background:#ed1c24;color:#fff}}.badge-measure{{background:#2f55a5;color:#fff}}
+.footer{{margin-top:28px;padding-top:14px;border-top:1px solid #ddd;font-size:11px;color:#999;display:flex;justify-content:space-between}}
+.sources{{font-size:11px;color:#777;margin-top:6px;line-height:1.7}}
+@media print{{body{{background:white;padding:0}}.page{{border:1px solid #aaa;padding:20px}}tr:hover td{{background:none}}}}
+</style></head><body><div class="page">
+<div class="header"><h1>K-AISecMap — AI보안 체크리스트</h1><h2>국가·공공기관 AI보안 매핑 어드바이저 · AI Security Mapping Advisor</h2></div>
+<div class="meta-grid">
+<div class="meta-item"><label>구축 유형</label><span>{cl_build}</span></div>
+<div class="meta-item"><label>AI 유형</label><span>{cl_ai}</span></div>
+<div class="meta-item"><label>생성일시</label><span>{generated_at}</span></div>
+<div class="meta-item"><label>버전</label><span>K-AISecMap v{APP_VERSION}</span></div>
+<div class="meta-item"><label>위협 수</label><span>{len(result['threats'])}개</span></div>
+<div class="meta-item"><label>대책 수</label><span>{len(result['measures'])}개</span></div>
+</div>
+<div class="warning">⚠️ <strong>실험적 서비스</strong> — 본 체크리스트는 연구·교육 목적의 비공식 자료이며 국가정보원(NIS)과 무관합니다.</div>
+<h3>주요 보안위협</h3><table><thead><tr><th style="width:80px">위협 ID</th><th style="width:160px">위협명</th><th>위험 내용</th></tr></thead><tbody>{threat_rows}</tbody></table>
+<h3>보안대책 체크리스트</h3><table><thead><tr><th class="check-cell">✓</th><th style="width:80px">대책 ID</th><th>점검 항목</th></tr></thead><tbody>{checklist_rows}</tbody></table>
+<div class="sources"><strong>참고 출처:</strong><br>· NIS AI보안 가이드북 (2025.12) — <a href="https://www.nis.go.kr">www.nis.go.kr</a><br>· OWASP Top 10 for LLM Applications — <a href="https://genai.owasp.org/">genai.owasp.org</a><br>· MITRE ATLAS — <a href="https://atlas.mitre.org/">atlas.mitre.org</a></div>
+<div class="footer"><span>K-AISecMap v{APP_VERSION} · {generated_at} · {cl_build} + {cl_ai}</span><span><a href="https://k-ai-sec.streamlit.app">k-ai-sec.streamlit.app</a> · <a href="https://github.com/sulgik/kais">github.com/sulgik/kais</a> · sulgik@gmail.com</span></div>
+</div></body></html>"""
+
+
+# ═══════════════════════════════════════════════════════════
+# Page: Home
+# ═══════════════════════════════════════════════════════════
+if page == "home":
+
+    # ── Description ────────────────────────────────────────
+    st.markdown("""
+<div style="background:#f8f9fa;border-radius:8px;padding:16px 20px;font-size:0.92rem;line-height:1.7;margin-bottom:16px;">
+  본 웹페이지는 대한민국 국가정보원에서 발간한 <strong>「국가·공공기관 AI 보안 가이드북」</strong>과
+  이와 관련된 문서들을 기반으로 AI 보안과 관련된 정보를 쉽게 찾아볼 수 있는 페이지입니다.<br>
+  AI와 관련한 어떤 <strong>위협</strong>들이 있고, 관련된 <strong>사고 사례</strong>로는 어떤 것들이 있는지,
+  그리고 각 위협은 어떻게 <strong>방어</strong>할 수 있는지 등을 알아볼 수 있습니다.
+</div>
+""", unsafe_allow_html=True)
+
+    # ── 3-column framework cards ───────────────────────────
     col_nis, col_owasp, col_atlas = st.columns(3, gap="large")
+    card_style = "border:1px solid #e5e5e5;border-radius:10px;padding:20px 18px;height:100%;"
 
     with col_nis:
+        st.markdown(f"""
+<div style="{card_style}border-top:4px solid #1a1a2e;">
+  <div style="font-size:1.05rem;font-weight:800;color:#1a1a2e;">NIS AI보안 가이드북</div>
+  <div style="font-size:0.78rem;color:#555;margin-bottom:10px;">국가정보원 · 2025년 12월</div>
+</div>""", unsafe_allow_html=True)
         st.markdown("""
-<div style="border-left:4px solid #1a1a2e; padding-left:16px; margin-bottom:16px;">
-  <div style="font-size:1.05rem; font-weight:700; color:#1a1a2e;">NIS AI보안 가이드북</div>
-  <div style="font-size:0.8rem; color:#888;">국가정보원 · 2025년 12월</div>
-</div>
-""", unsafe_allow_html=True)
-        st.markdown("""
-국가정보원이 발간한 **국가·공공기관 AI시스템 보안 가이드북**입니다.
-생성형·에이전틱·피지컬 AI를 포괄하는 수명주기 전 단계의 보안위협과 대책을 정리한
-국내 최초의 공공 AI보안 기준서입니다.
-
-**보안위협 (T01 ~ T15)**
-학습데이터 오염, 프롬프트 인젝션, 회피 공격, 공급망 공격 등
-AI시스템에 특화된 15개 위협 유형을 정의합니다.
-
-**보안대책 (M01 ~ M30 · A-M · P-M)**
-공통 대책 외에 에이전틱 AI(A-M), 피지컬 AI(P-M) 전용 대책을 별도 제시합니다.
-
-**구축유형별 가이드**
-내부망 전용 / 외부망 연계 / 대민서비스 / 상용 AI서비스
-각 환경에 맞는 중점 위협과 우선 적용 대책을 안내합니다.
+**보안위협 T01~T15** — 학습데이터 오염, 프롬프트 인젝션, 회피 공격 등 15개 유형
+**보안대책 M01~M30 + A-M · P-M** — 공통 + 에이전틱·피지컬 AI 전용 대책
+**구축유형별 가이드** — 내부망 / 외부망 / 대민서비스 / 상용 AI
 """)
-        st.link_button("원문 보기 — nis.go.kr", "https://www.nis.go.kr", use_container_width=True)
 
     with col_owasp:
+        st.markdown(f"""
+<div style="{card_style}border-top:4px solid #f58220;">
+  <div style="font-size:1.05rem;font-weight:800;color:#f58220;">OWASP LLM Top 10</div>
+  <div style="font-size:0.78rem;color:#555;margin-bottom:10px;">Open Worldwide Application Security Project · 2025</div>
+</div>""", unsafe_allow_html=True)
         st.markdown("""
-<div style="border-left:4px solid #f58220; padding-left:16px; margin-bottom:16px;">
-  <div style="font-size:1.05rem; font-weight:700; color:#1a1a2e;">OWASP Top 10 for LLM Applications</div>
-  <div style="font-size:0.8rem; color:#888;">Open Worldwide Application Security Project · 2025</div>
-</div>
-""", unsafe_allow_html=True)
-        st.markdown("""
-**OWASP**가 선정한 LLM 애플리케이션의 10대 취약점으로,
-전 세계 AI 보안 실무의 사실상 표준입니다.
-
-| ID | 취약점 |
-|----|--------|
-| LLM01 | 프롬프트 인젝션 |
-| LLM02 | 민감 정보 노출 |
-| LLM03 | 공급망 취약점 |
-| LLM04 | 데이터·모델 오염 |
-| LLM05 | 부적절한 출력 처리 |
-| LLM06 | 과도한 권한 위임 |
-| LLM07 | 시스템 프롬프트 유출 |
-| LLM08 | 벡터·임베딩 취약점 |
-| LLM09 | 허위 정보 생성 |
-| LLM10 | 무제한 리소스 소비 |
-
-본 시스템에서 NIS 가이드북 위협·대책과 **양방향 교차 매핑**을 제공합니다.
+**LLM01** 프롬프트 인젝션 · **LLM02** 민감정보 노출 · **LLM03** 공급망
+**LLM04** 데이터 오염 · **LLM05~10** 출력처리·권한·유출 등
+NIS 위협·대책과 **양방향 교차 매핑** 제공
 """)
-        st.link_button("원문 보기 — genai.owasp.org", "https://genai.owasp.org/", use_container_width=True)
 
     with col_atlas:
-        st.markdown("""
-<div style="border-left:4px solid #7b2d8e; padding-left:16px; margin-bottom:16px;">
-  <div style="font-size:1.05rem; font-weight:700; color:#1a1a2e;">MITRE ATLAS</div>
-  <div style="font-size:0.8rem; color:#888;">Adversarial Threat Landscape for AI Systems</div>
-</div>
-""", unsafe_allow_html=True)
         st.markdown(f"""
-**MITRE ATLAS**는 AI/ML 시스템에 대한 적대적 위협을
-ATT&CK 프레임워크 스타일로 체계화한 **taxonomy**입니다.
-
-**{len(kg.atlas_tactics)}개 전술 (Tactics)**
-정찰, 초기접근, 실행, 지속성 유지, 유출, 영향 등
-공격 킬체인의 각 단계를 정의합니다.
-
-**{len(kg.atlas_techniques)}개 기법 (Techniques)**
-학습데이터 오염, 프롬프트 인젝션, 모델 추출,
-적대적 데이터 생성 등 구체적 공격 기법입니다.
-
-**본 시스템의 차별점**
-NIS 위협(T##) ↔ ATLAS 기법(AML.T####) ↔ OWASP(LLM##)
-**3자 교차 매핑**을 제공하여, 어느 프레임워크에서든
-관련 항목을 즉시 탐색할 수 있습니다.
+<div style="{card_style}border-top:4px solid #7b2d8e;">
+  <div style="font-size:1.05rem;font-weight:800;color:#7b2d8e;">MITRE ATLAS</div>
+  <div style="font-size:0.78rem;color:#555;margin-bottom:10px;">Adversarial Threat Landscape for AI Systems</div>
+</div>""", unsafe_allow_html=True)
+        st.markdown(f"""
+**{len(kg.atlas_tactics)}개 전술** — 공격 킬체인 각 단계
+**{len(kg.atlas_techniques)}개 기법** — 구체적 공격 기법
+NIS 위협(T##) ↔ ATLAS(AML.T####) ↔ OWASP(LLM##) **3자 교차 매핑**
 """)
-        st.link_button("원문 보기 — atlas.mitre.org", "https://atlas.mitre.org/", use_container_width=True)
 
     st.divider()
 
-    # ── 홈 네트워크 그래프 ──
-    st.markdown("""
-**🗺️ AI 보안 프레임워크 통합 지도**
+    # ── Map section ────────────────────────────────────────
+    st.markdown("### 🗺️ AI 보안 프레임워크 통합 지도")
+    st.caption("노드를 클릭하면 오른쪽에 상세 정보가 표시됩니다. 드래그·스크롤로 탐색하세요.")
 
-아래 그래프는 AI 보안 프레임워크들의 관계를 시각화합니다.
-**선으로 연결된 노드**는 서로 관련된 보안 항목입니다. **노드를 클릭**하면 상세 정보를 확인할 수 있고,
-드래그하거나 스크롤하여 그래프를 탐색할 수 있습니다.
-
-| 색상 | 유형 | 설명 |
-|------|------|------|
-| 🔴 빨간 원 | **NIS 보안위협** (T01~T15) | 국정원 가이드북이 정의한 AI 보안위협 |
-| ⭐ 빨간 별 | **NIS 사고사례** (INC01~) | 실제 발생한 AI 보안 사고 |
-| 🟣 보라 삼각 | **ATLAS 사례연구** (AML.CS) | MITRE가 수집한 실제 AI 공격 사례 |
-| 🟠 주황 사각 | **OWASP LLM Top 10** (LLM01~10) | LLM 10대 취약점 |
-""")
-
-    try:
-        from streamlit_agraph import agraph, Node, Edge, Config
-
-        graph_data = kg.build_graph_data(
-            show_nis=True, show_owasp=True, show_measures=False,
-            show_incidents=True, show_case_studies=True,
+    # Filters
+    filter_col1, filter_col2 = st.columns(2)
+    with filter_col1:
+        map_view = st.radio(
+            "표시할 매핑",
+            ["🔴 NIS 위협 ↔ 🟠 OWASP ↔ 🟣 ATLAS ↔ ⭐ 사고사례", "🔴 NIS 위협 ↔ 🔵 대책"],
+            key="home_map_pair", horizontal=True, label_visibility="collapsed",
+        )
+    with filter_col2:
+        viz_mode = st.radio(
+            "시각화 모드",
+            ["🕸️ 네트워크 그래프", "🌊 Sankey 흐름도"],
+            key="home_viz_mode", horizontal=True, label_visibility="collapsed",
         )
 
-        agraph_nodes = []
-        for n in graph_data["nodes"]:
-            agraph_nodes.append(Node(
-                id=n["id"], label=n["label"], color=n["color"],
-                shape=n["shape"], size=n["size"], title=n["title"],
-                font={"color": "#333333", "size": 12},
-            ))
+    show_nis_pair = map_view.startswith("🔴 NIS 위협 ↔ 🔵")
+    show_ext_pair = not show_nis_pair
 
-        agraph_edges = []
-        for e in graph_data["edges"]:
-            edge_kwargs = {"source": e["source"], "target": e["target"], "color": e.get("color", "#888")}
-            if e.get("width"):
-                edge_kwargs["width"] = e["width"]
-            agraph_edges.append(Edge(**edge_kwargs))
-
-        config = Config(
-            width="100%", height=600,
-            directed=False, physics=True, hierarchical=False,
+    # Legend
+    if show_nis_pair:
+        st.markdown(
+            '<span style="font-size:0.85em;">'
+            '<span style="display:inline-block;width:12px;height:12px;background:#ed1c24;border-radius:50%;vertical-align:middle;"></span> <b>NIS 위협</b> &nbsp; '
+            '<span style="display:inline-block;width:12px;height:12px;background:#2f55a5;transform:rotate(45deg);vertical-align:middle;"></span> <b>NIS 대책</b>'
+            '</span>', unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            '<span style="font-size:0.85em;">'
+            '<span style="display:inline-block;width:12px;height:12px;background:#ed1c24;border-radius:50%;vertical-align:middle;"></span> <b>NIS 위협</b> &nbsp; '
+            '<span style="display:inline-block;width:12px;height:12px;background:#e74c3c;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);vertical-align:middle;"></span> <b>NIS 사고사례</b> &nbsp; '
+            '<span style="display:inline-block;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:12px solid #9b59b6;vertical-align:middle;"></span> <b>ATLAS 사례연구</b> &nbsp; '
+            '<span style="display:inline-block;width:12px;height:12px;background:#f58220;vertical-align:middle;"></span> <b>OWASP</b>'
+            '</span>', unsafe_allow_html=True,
         )
 
-        selected_home = agraph(nodes=agraph_nodes, edges=agraph_edges, config=config)
-        if selected_home:
-            st.session_state["trinity_selected"] = selected_home
-            st.rerun()
+    # Graph + Detail side-by-side
+    col_graph, col_detail = st.columns([3, 1])
 
-    except ImportError:
-        pass
+    with col_graph:
+        if viz_mode == "🕸️ 네트워크 그래프":
+            try:
+                from streamlit_agraph import agraph, Node, Edge, Config
+
+                graph_data = kg.build_graph_data(
+                    show_nis=True,
+                    show_owasp=show_ext_pair,
+                    show_measures=show_nis_pair,
+                    show_incidents=show_ext_pair,
+                    show_case_studies=show_ext_pair,
+                )
+
+                agraph_nodes = []
+                for n in graph_data["nodes"]:
+                    agraph_nodes.append(Node(
+                        id=n["id"], label=n["label"], color=n["color"],
+                        shape=n["shape"], size=n["size"], title=n["title"],
+                        font={"color": "#333333", "size": 12},
+                    ))
+
+                agraph_edges = []
+                for e in graph_data["edges"]:
+                    edge_kwargs = {"source": e["source"], "target": e["target"], "color": e.get("color", "#888")}
+                    if e.get("width"):
+                        edge_kwargs["width"] = e["width"]
+                    agraph_edges.append(Edge(**edge_kwargs))
+
+                config = Config(
+                    width="100%", height=750,
+                    directed=False, physics=True, hierarchical=False,
+                )
+
+                selected = agraph(nodes=agraph_nodes, edges=agraph_edges, config=config)
+                if selected:
+                    st.session_state["home_selected"] = selected
+
+            except ImportError:
+                st.error("streamlit-agraph가 설치되지 않았습니다.")
+        else:
+            # Sankey
+            fig = _build_sankey(show_nis_pair, show_ext_pair)
+            if fig:
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("위에서 표시할 매핑을 선택하세요.")
+
+    with col_detail:
+        sel_id = st.session_state.get("home_selected")
+        if sel_id:
+            st.markdown("---")
+            _render_node_detail(sel_id)
+        else:
+            st.markdown("""
+<div style="background:#f0f4ff;border-radius:8px;padding:20px;text-align:center;color:#888;margin-top:40px;">
+  <div style="font-size:2rem;">👈</div>
+  <div style="font-size:0.85rem;margin-top:8px;">그래프에서 노드를 클릭하면<br>여기에 상세 정보가 표시됩니다</div>
+</div>""", unsafe_allow_html=True)
 
     st.caption("참고 기준: NIST AI RMF · MITRE ATLAS · OWASP LLM Top 10 · NIS AI보안 가이드북(2025.12)")
 
-# --- Tab 1: Knowledge Explorer ---
-with tab_explorer:
+# ═══════════════════════════════════════════════════════════
+# Page: Knowledge Explorer
+# ═══════════════════════════════════════════════════════════
+elif page == "explorer":
     col1, col2 = st.columns(2)
 
     with col1:
@@ -322,269 +614,10 @@ with tab_explorer:
                     badges = " ".join(_t_badge(t["id"]) for t in related_threats)
                     st.markdown(f"**대응 위협:** {badges}", unsafe_allow_html=True)
 
-# --- Tab 2: Trinity Knowledge Map ---
-with tab_trinity:
-    st.subheader("통합 지식맵 — NIS + MITRE ATLAS + OWASP")
-    st.caption("노드를 클릭하면 아래에 상세 정보가 표시됩니다. 드래그·스크롤로 그래프를 탐색하세요.")
-
-    # Inline filter
-    map_view = st.radio(
-        "표시할 매핑",
-        ["🔴 NIS 위협 ↔ 🔵 대책", "🟠 OWASP ↔ 🟣 ATLAS 사례연구 ↔ ⭐ 사고사례"],
-        key="trinity_pair", horizontal=True, label_visibility="collapsed",
-    )
-    show_nis_pair = map_view.startswith("🔴")
-    show_ext_pair = not show_nis_pair
-
-    view_graph, view_sankey = st.tabs(["🕸️ 네트워크 그래프", "🌊 Sankey 흐름도"])
-
-    # ── View 1: Network Graph (full width) ─────────────────────────────────
-    with view_graph:
-        try:
-            from streamlit_agraph import agraph, Node, Edge, Config
-
-            graph_data = kg.build_graph_data(
-                show_nis=True,
-                show_owasp=show_ext_pair,
-                show_measures=show_nis_pair,
-                show_incidents=show_ext_pair,
-                show_case_studies=show_ext_pair,
-            )
-
-            agraph_nodes = []
-            for n in graph_data["nodes"]:
-                agraph_nodes.append(Node(
-                    id=n["id"], label=n["label"], color=n["color"],
-                    shape=n["shape"], size=n["size"], title=n["title"],
-                    font={"color": "#333333", "size": 12},
-                ))
-
-            agraph_edges = []
-            for e in graph_data["edges"]:
-                edge_kwargs = {"source": e["source"], "target": e["target"], "color": e.get("color", "#888")}
-                if e.get("width"):
-                    edge_kwargs["width"] = e["width"]
-                agraph_edges.append(Edge(**edge_kwargs))
-
-            config = Config(
-                width="100%", height=900,
-                directed=False, physics=True, hierarchical=False,
-            )
-
-            # Legend
-            if show_nis_pair:
-                st.markdown(
-                    '<span style="font-size:0.85em;">'
-                    '<span style="display:inline-block;width:12px;height:12px;background:#ed1c24;border-radius:50%;vertical-align:middle;"></span> <b>NIS 위협</b> &nbsp; '
-                    '<span style="display:inline-block;width:12px;height:12px;background:#2f55a5;transform:rotate(45deg);vertical-align:middle;"></span> <b>NIS 대책</b>'
-                    '</span>', unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    '<span style="font-size:0.85em;">'
-                    '<span style="display:inline-block;width:12px;height:12px;background:#ed1c24;border-radius:50%;vertical-align:middle;"></span> <b>NIS 위협</b> &nbsp; '
-                    '<span style="display:inline-block;width:12px;height:12px;background:#e74c3c;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);vertical-align:middle;"></span> <b>NIS 사고사례</b> &nbsp; '
-                    '<span style="display:inline-block;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:12px solid #9b59b6;vertical-align:middle;"></span> <b>ATLAS 사례연구</b> &nbsp; '
-                    '<span style="display:inline-block;width:12px;height:12px;background:#f58220;vertical-align:middle;"></span> <b>OWASP</b>'
-                    '</span>', unsafe_allow_html=True,
-                )
-
-            selected = agraph(nodes=agraph_nodes, edges=agraph_edges, config=config)
-            if selected:
-                st.session_state["trinity_selected"] = selected
-                st.rerun()
-
-        except ImportError:
-            st.error("streamlit-agraph가 설치되지 않았습니다. `pip install streamlit-agraph`를 실행해주세요.")
-
-    # ── View 2: Sankey ────────────────────────────────────────────────────
-    with view_sankey:
-        import plotly.graph_objects as go
-
-        labels = []
-        label_idx = {}
-
-        def _strip_ai(s):
-            return s.replace('AI ', '').replace('AI', '')
-
-        def _get_idx(label):
-            if label not in label_idx:
-                label_idx[label] = len(labels)
-                labels.append(label)
-            return label_idx[label]
-
-        sources, targets, values, link_colors = [], [], [], []
-
-        if show_nis_pair:
-            # NIS 위협 → NIS 대책
-            for link in kg.links:
-                t = kg.get_threat(link["threat_id"])
-                m = kg.get_measure(link["measure_id"])
-                if t and m:
-                    src_label = f"{t['id']} {_strip_ai(t['name'])}"
-                    tgt_label = f"{m['id']} {_strip_ai(m['name'])}"
-                    sources.append(_get_idx(src_label))
-                    targets.append(_get_idx(tgt_label))
-                    values.append(1)
-                    link_colors.append("rgba(47,85,165,0.3)")
-
-        if show_ext_pair:
-            # ATLAS Case Study → NIS 위협 (via technique mapping)
-            for cs in kg.atlas_case_studies:
-                threat_ids = kg._case_study_threats.get(cs["id"], [])
-                if not threat_ids:
-                    continue
-                src_label = f"{cs['id'][:8]} {_strip_ai(cs['name_ko'])}"
-                for tid in threat_ids:
-                    t = kg.get_threat(tid)
-                    if t:
-                        tgt_label = f"{t['id']} {_strip_ai(t['name'])}"
-                        sources.append(_get_idx(src_label))
-                        targets.append(_get_idx(tgt_label))
-                        values.append(2)
-                        link_colors.append("rgba(155,89,182,0.3)")
-
-            # NIS 위협 → OWASP
-            for om in kg._owasp_mapping:
-                o = kg.get_owasp(om["owasp_id"])
-                if not o:
-                    continue
-                tgt_label = f"{o['id']} {_strip_ai(o['name_ko'])}"
-                for tid in om.get("threat_ids", []):
-                    t = kg.get_threat(tid)
-                    if t:
-                        src_label = f"{t['id']} {_strip_ai(t['name'])}"
-                        sources.append(_get_idx(src_label))
-                        targets.append(_get_idx(tgt_label))
-                        values.append(1)
-                        link_colors.append("rgba(245,130,32,0.3)")
-
-            # NIS 위협 → NIS 사고사례
-            for inc in kg.incidents:
-                for tid in inc.get("threat_ids", []):
-                    t = kg.get_threat(tid)
-                    if t:
-                        src_label = f"{t['id']} {_strip_ai(t['name'])}"
-                        tgt_label = f"{inc['id']} {inc['title'][:12]}"
-                        sources.append(_get_idx(src_label))
-                        targets.append(_get_idx(tgt_label))
-                        values.append(1)
-                        link_colors.append("rgba(231,76,60,0.3)")
-
-        # 노드 색상
-        node_colors = []
-        for lbl in labels:
-            if lbl.startswith("AML.CS"):
-                node_colors.append("#9b59b6")
-            elif lbl.startswith("AML."):
-                node_colors.append("#7b2d8e")
-            elif lbl.startswith("LLM"):
-                node_colors.append("#f58220")
-            elif lbl.startswith("INC"):
-                node_colors.append("#e74c3c")
-            elif lbl.startswith("T"):
-                node_colors.append("#ed1c24")
-            elif lbl.startswith("M") or lbl.startswith("A-M") or lbl.startswith("P-M"):
-                node_colors.append("#2f55a5")
-            else:
-                node_colors.append("#888")
-
-        if sources:
-            fig = go.Figure(go.Sankey(
-                arrangement="snap",
-                node=dict(
-                    pad=14, thickness=20,
-                    label=labels,
-                    color=node_colors,
-                    line=dict(color="white", width=0.5),
-                ),
-                textfont=dict(size=13, color="#000000", family="sans-serif"),
-                link=dict(
-                    source=sources, target=targets, value=values,
-                    color=link_colors,
-                ),
-            ))
-            sankey_title = "NIS 위협 → 대책" if show_nis_pair else "ATLAS 사례연구 → NIS 위협 → OWASP / 사고사례"
-            fig.update_layout(
-                title=dict(text=sankey_title, font=dict(size=14)),
-                height=800,
-                margin=dict(l=10, r=10, t=40, b=10),
-                font=dict(size=11, color="#000000"),
-            )
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("위에서 표시할 매핑을 선택하세요.")
-
-    # ── Node click detail (inline, below graph/sankey) ─────────────────
-    sel_id = st.session_state.get("trinity_selected")
-    if sel_id:
-        st.divider()
-        # NIS Threat
-        if sel_id in kg._threat_by_id:
-            item = kg._threat_by_id[sel_id]
-            st.markdown(f"### {_t_badge(item['id'])} {item['name']}", unsafe_allow_html=True)
-            st.markdown(item.get("definition", ""))
-            st.markdown(f"**위험:** {item.get('risk', '')}")
-            if item.get("lifecycles"):
-                st.caption(f"수명주기: {' · '.join(item['lifecycles'])}")
-            # Related incidents
-            inc_ids = kg._incidents_for_threat.get(sel_id, [])
-            if inc_ids:
-                st.markdown("**🔴 관련 사고사례**")
-                for iid in inc_ids:
-                    inc = kg._incident_by_id[iid]
-                    st.markdown(f"- **{inc['title']}** ({inc['year']}) — {inc['description'][:80]}…")
-            # Related OWASP
-            owasp_list = kg.get_owasp_for_threat(sel_id)
-            if owasp_list:
-                st.markdown("**🟠 OWASP 매핑:** " + " ".join(f"{_owasp_badge(o['id'])}" for o in owasp_list), unsafe_allow_html=True)
-            # Related measures
-            measures = kg.get_measures_for_threat(sel_id)
-            if measures:
-                st.markdown("**🔵 대응 대책:** " + " ".join(_m_badge(m["id"]) for m in measures), unsafe_allow_html=True)
-        # NIS Incident
-        elif sel_id in kg._incident_by_id:
-            inc = kg._incident_by_id[sel_id]
-            st.markdown(f"### ⭐ {inc['title']}")
-            st.markdown(f"**{inc['year']}년** · {inc.get('source', '')}")
-            st.markdown(inc["description"])
-            threat_badges = " ".join(_t_badge(tid) for tid in inc.get("threat_ids", []))
-            st.markdown(f"**관련 위협:** {threat_badges}", unsafe_allow_html=True)
-        # ATLAS Case Study
-        elif sel_id in kg._case_study_by_id:
-            cs = kg._case_study_by_id[sel_id]
-            st.markdown(f"### 🟣 {cs['name_ko']}")
-            st.markdown(f"*{cs['name']}*")
-            threat_ids = kg._case_study_threats.get(sel_id, [])
-            if threat_ids:
-                badges = " ".join(_t_badge(tid) for tid in threat_ids)
-                st.markdown(f"**관련 NIS 위협:** {badges}", unsafe_allow_html=True)
-            st.markdown(f"[ATLAS 원문 →]({cs.get('url', '')})")
-        # OWASP
-        elif sel_id in kg._owasp_by_id:
-            item = kg._owasp_by_id[sel_id]
-            st.markdown(f"### {_owasp_badge(item['id'])} {item.get('name_ko', item['name'])}", unsafe_allow_html=True)
-            st.markdown(f"*{item['name']}*")
-            st.markdown(item.get("description", "")[:200] + "…" if len(item.get("description", "")) > 200 else item.get("description", ""))
-            nis = kg.get_nis_for_owasp(sel_id)
-            if nis["threats"]:
-                st.markdown("**NIS 위협:** " + " ".join(_t_badge(t["id"]) for t in nis["threats"]), unsafe_allow_html=True)
-            if nis["measures"]:
-                st.markdown("**대응 대책:** " + " ".join(_m_badge(m["id"]) for m in nis["measures"]), unsafe_allow_html=True)
-        # NIS Measure
-        elif sel_id in kg._measure_by_id:
-            item = kg._measure_by_id[sel_id]
-            st.markdown(f"### {_m_badge(item['id'])} {item['name']}", unsafe_allow_html=True)
-            st.markdown(item["description"])
-            if item.get("details"):
-                for d in item["details"]:
-                    st.markdown(f"- {d}")
-            related = kg.get_threats_for_measure(sel_id)
-            if related:
-                st.markdown("**대응 위협:** " + " ".join(_t_badge(t["id"]) for t in related), unsafe_allow_html=True)
-
-# --- Tab 3: OWASP LLM Top 10 ---
-with tab_owasp:
+# ═══════════════════════════════════════════════════════════
+# Page: OWASP LLM Top 10
+# ═══════════════════════════════════════════════════════════
+elif page == "owasp":
     st.subheader("OWASP Top 10 for LLM Applications (2025)")
     st.caption("각 항목과 NIS AI보안 가이드북의 대응 위협·대책을 교차 매핑합니다.")
 
@@ -629,8 +662,10 @@ with tab_owasp:
                     if tech:
                         st.markdown(f"- {_atlas_badge(aid)} [{tech['name_ko']}]({tech.get('url', '')}) — {tech['name']}", unsafe_allow_html=True)
 
-# --- Tab 3: Incidents ---
-with tab_incidents:
+# ═══════════════════════════════════════════════════════════
+# Page: Incidents
+# ═══════════════════════════════════════════════════════════
+elif page == "incidents":
     st.subheader("AI 보안 사고 사례")
     st.caption("NIS AI보안 가이드북에 수록된 실제 사고/공격 사례")
 
@@ -656,235 +691,7 @@ with tab_incidents:
     else:
         st.info("사고 사례 데이터가 없습니다.")
 
-def _generate_checklist_html(cl_build: str, cl_ai: str, result: dict) -> str:
-    """Generate a standalone HTML checklist page."""
-    generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
-
-    threat_rows = ""
-    for t in result["threats"]:
-        threat_rows += f"""
-        <tr>
-          <td><span class="badge badge-threat">{t['id']}</span></td>
-          <td><strong>{t['name']}</strong></td>
-          <td>{t.get('risk', '')}</td>
-        </tr>"""
-
-    checklist_rows = ""
-    for i, m in enumerate(result["measures"], 1):
-        label = m.get("checklist") or m["name"]
-        checklist_rows += f"""
-        <tr>
-          <td class="check-cell"><input type="checkbox" id="chk_{m['id']}"></td>
-          <td><label for="chk_{m['id']}"><span class="badge badge-measure">{m['id']}</span></label></td>
-          <td><label for="chk_{m['id']}">{label}</label></td>
-        </tr>"""
-
-    return f"""<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>K-AISecMap 체크리스트 — {cl_build} + {cl_ai}</title>
-<style>
-  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-  body {{
-    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
-    font-size: 14px;
-    background: #f5f7fa;
-    color: #1a1a2e;
-    padding: 24px;
-  }}
-  .page {{
-    max-width: 900px;
-    margin: 0 auto;
-    background: #fff;
-    border: 2px solid #2f55a5;
-    border-radius: 10px;
-    padding: 32px 36px;
-  }}
-  /* Header */
-  .header {{
-    border-bottom: 3px solid #2f55a5;
-    padding-bottom: 16px;
-    margin-bottom: 20px;
-  }}
-  .header h1 {{
-    font-size: 22px;
-    color: #2f55a5;
-    letter-spacing: -0.5px;
-  }}
-  .header h2 {{
-    font-size: 15px;
-    font-weight: normal;
-    color: #555;
-    margin-top: 4px;
-  }}
-  /* Meta grid */
-  .meta-grid {{
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    background: #f0f4ff;
-    border: 1px solid #c5d3f5;
-    border-radius: 8px;
-    padding: 14px 18px;
-    margin-bottom: 20px;
-  }}
-  .meta-item label {{ font-size: 11px; color: #777; display: block; margin-bottom: 2px; }}
-  .meta-item span  {{ font-size: 14px; font-weight: bold; color: #1a1a2e; }}
-  /* Warning */
-  .warning {{
-    background: #fff8e1;
-    border-left: 4px solid #f0a500;
-    border-radius: 4px;
-    padding: 10px 14px;
-    font-size: 12px;
-    color: #7a5c00;
-    margin-bottom: 24px;
-    line-height: 1.6;
-  }}
-  /* Section titles */
-  h3 {{
-    font-size: 15px;
-    color: #2f55a5;
-    margin: 20px 0 10px;
-    padding-left: 8px;
-    border-left: 4px solid #2f55a5;
-  }}
-  /* Tables */
-  table {{
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 8px;
-    font-size: 13px;
-  }}
-  th {{
-    background: #2f55a5;
-    color: #fff;
-    padding: 8px 10px;
-    text-align: left;
-    font-size: 12px;
-  }}
-  td {{
-    padding: 8px 10px;
-    border-bottom: 1px solid #e8eaf0;
-    vertical-align: top;
-    line-height: 1.5;
-  }}
-  tr:hover td {{ background: #f5f7ff; }}
-  .check-cell {{ width: 32px; text-align: center; }}
-  input[type="checkbox"] {{ width: 16px; height: 16px; cursor: pointer; accent-color: #2f55a5; }}
-  /* Badges */
-  .badge {{
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 12px;
-    white-space: nowrap;
-  }}
-  .badge-threat  {{ background: #ed1c24; color: #fff; }}
-  .badge-measure {{ background: #2f55a5; color: #fff; }}
-  /* Footer */
-  .footer {{
-    margin-top: 28px;
-    padding-top: 14px;
-    border-top: 1px solid #ddd;
-    font-size: 11px;
-    color: #999;
-    display: flex;
-    justify-content: space-between;
-  }}
-  .sources {{ font-size: 11px; color: #777; margin-top: 6px; line-height: 1.7; }}
-  @media print {{
-    body {{ background: white; padding: 0; }}
-    .page {{ border: 1px solid #aaa; padding: 20px; }}
-    tr:hover td {{ background: none; }}
-  }}
-</style>
-</head>
-<body>
-<div class="page">
-
-  <div class="header">
-    <h1>🛡️ K-AISecMap — AI보안 체크리스트</h1>
-    <h2>국가·공공기관 AI보안 매핑 어드바이저 · AI Security Mapping Advisor</h2>
-  </div>
-
-  <div class="meta-grid">
-    <div class="meta-item">
-      <label>구축 유형</label>
-      <span>{cl_build}</span>
-    </div>
-    <div class="meta-item">
-      <label>AI 유형</label>
-      <span>{cl_ai}</span>
-    </div>
-    <div class="meta-item">
-      <label>생성일시</label>
-      <span>{generated_at}</span>
-    </div>
-    <div class="meta-item">
-      <label>버전</label>
-      <span>K-AISecMap v{APP_VERSION}</span>
-    </div>
-    <div class="meta-item">
-      <label>위협 수</label>
-      <span>{len(result['threats'])}개</span>
-    </div>
-    <div class="meta-item">
-      <label>대책 수</label>
-      <span>{len(result['measures'])}개</span>
-    </div>
-  </div>
-
-  <div class="warning">
-    ⚠️ <strong>실험적 서비스 (Experimental)</strong> — 본 체크리스트는 연구·교육 목적의 비공식 자료이며 국가정보원(NIS)과 무관합니다.
-    답변은 NIS AI보안 가이드북(2025.12)을 기반으로 생성되며, 공식 보안 검토를 대체하지 않습니다.
-  </div>
-
-  <h3>주요 보안위협</h3>
-  <table>
-    <thead>
-      <tr><th style="width:80px">위협 ID</th><th style="width:160px">위협명</th><th>위험 내용</th></tr>
-    </thead>
-    <tbody>{threat_rows}
-    </tbody>
-  </table>
-
-  <h3>보안대책 체크리스트</h3>
-  <table>
-    <thead>
-      <tr><th class="check-cell">✓</th><th style="width:80px">대책 ID</th><th>점검 항목</th></tr>
-    </thead>
-    <tbody>{checklist_rows}
-    </tbody>
-  </table>
-
-  <div class="sources">
-    <strong>참고 출처:</strong><br>
-    · NIS AI보안 가이드북 (2025.12) — <a href="https://www.nis.go.kr" target="_blank">www.nis.go.kr</a><br>
-    · OWASP Top 10 for LLM Applications — <a href="https://genai.owasp.org/" target="_blank">genai.owasp.org</a><br>
-    · NIST AI Risk Management Framework — <a href="https://www.nist.gov/artificial-intelligence" target="_blank">nist.gov/artificial-intelligence</a><br>
-    · MITRE ATLAS — <a href="https://atlas.mitre.org/" target="_blank">atlas.mitre.org</a>
-  </div>
-
-  <div class="footer">
-    <span>K-AISecMap v{APP_VERSION} · {generated_at} · {cl_build} + {cl_ai}</span>
-    <span>
-      <a href="https://k-ai-sec.streamlit.app" target="_blank">k-ai-sec.streamlit.app</a> ·
-      <a href="https://github.com/sulgik/kais" target="_blank">github.com/sulgik/kais</a> ·
-      sulgik@gmail.com
-    </span>
-  </div>
-
-</div>
-</body>
-</html>"""
-
-
-# --- Tab 4: Checklist Generator ---
-with tab_checklist:
+elif page == "checklist":
     st.subheader("보안대책 체크리스트 생성기")
     st.markdown("구축 유형과 AI 유형을 선택하면 맞춤형 체크리스트를 생성합니다.")
 
@@ -942,8 +749,10 @@ with tab_checklist:
             help="독립 실행 가능한 HTML 체크리스트 파일로 저장합니다.",
         )
 
-# --- Tab 5: MCP 연결 안내 ---
-with tab_mcp:
+# ═══════════════════════════════════════════════════════════
+# Page: MCP 연결
+# ═══════════════════════════════════════════════════════════
+elif page == "mcp":
     st.subheader("🔌 AI 어드바이저와 대화하기 — MCP 연결")
     st.markdown(
         """
