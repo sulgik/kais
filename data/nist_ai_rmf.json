@@ -1,0 +1,53 @@
+[
+  {
+    "id": "GOVERN",
+    "name": "Govern",
+    "name_ko": "거버넌스",
+    "description": "AI 위험을 다루는 정책·프로세스·절차·관행이 수립·운용·모니터링됨.",
+    "categories": [
+      {"id": "GOVERN.1", "name": "Policies and Accountability", "name_ko": "정책 및 책임"},
+      {"id": "GOVERN.2", "name": "Culture and Awareness", "name_ko": "문화 및 인식"},
+      {"id": "GOVERN.3", "name": "Workforce Diversity", "name_ko": "인력 다양성"},
+      {"id": "GOVERN.4", "name": "Organizational Teams", "name_ko": "조직 팀"},
+      {"id": "GOVERN.5", "name": "Policies and Processes", "name_ko": "정책 및 프로세스"},
+      {"id": "GOVERN.6", "name": "Policies for Third Parties", "name_ko": "제3자 정책"}
+    ]
+  },
+  {
+    "id": "MAP",
+    "name": "Map",
+    "name_ko": "식별",
+    "description": "AI 위험의 맥락이 수립되고 위험이 식별됨.",
+    "categories": [
+      {"id": "MAP.1", "name": "Context Established", "name_ko": "맥락 수립"},
+      {"id": "MAP.2", "name": "Scientific and Technical Understanding", "name_ko": "과학·기술적 이해"},
+      {"id": "MAP.3", "name": "AI System Understanding", "name_ko": "AI 시스템 이해"},
+      {"id": "MAP.4", "name": "Risks Identified", "name_ko": "위험 식별"},
+      {"id": "MAP.5", "name": "Impacts Understood", "name_ko": "영향 이해"}
+    ]
+  },
+  {
+    "id": "MEASURE",
+    "name": "Measure",
+    "name_ko": "측정",
+    "description": "식별된 AI 위험이 분석·평가·모니터링됨.",
+    "categories": [
+      {"id": "MEASURE.1", "name": "Risk Measurement Approaches", "name_ko": "위험 측정 접근법"},
+      {"id": "MEASURE.2", "name": "AI Risk Assessments", "name_ko": "AI 위험 평가"},
+      {"id": "MEASURE.3", "name": "AI Risk Tracking", "name_ko": "AI 위험 추적"},
+      {"id": "MEASURE.4", "name": "Feedback and Evaluation", "name_ko": "피드백 및 평가"}
+    ]
+  },
+  {
+    "id": "MANAGE",
+    "name": "Manage",
+    "name_ko": "관리",
+    "description": "AI 위험에 대한 대응·대책이 우선순위에 따라 계획·실행·모니터링됨.",
+    "categories": [
+      {"id": "MANAGE.1", "name": "Risk Prioritization", "name_ko": "위험 우선순위화"},
+      {"id": "MANAGE.2", "name": "Risk Response", "name_ko": "위험 대응"},
+      {"id": "MANAGE.3", "name": "Risk Monitoring", "name_ko": "위험 모니터링"},
+      {"id": "MANAGE.4", "name": "Residual Risk Management", "name_ko": "잔여 위험 관리"}
+    ]
+  }
+]

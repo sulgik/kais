@@ -85,12 +85,57 @@ def show_threat_image(threat_id: str):
             st.image(str(img_path), use_container_width=True)
 
 
+# ── Custom CSS for authoritative look ──────────────────────
+st.markdown("""
+<style>
+/* Sidebar dark header */
+[data-testid="stSidebar"] > div:first-child {
+    background: linear-gradient(180deg, #0d1b2a 0%, #1b2838 100%);
+}
+[data-testid="stSidebar"] [data-testid="stMarkdown"] {
+    color: #c8d6e5;
+}
+[data-testid="stSidebar"] hr {
+    border-color: rgba(255,255,255,0.08);
+}
+/* Sidebar nav buttons */
+[data-testid="stSidebar"] button {
+    background: transparent !important;
+    border: none !important;
+    color: #c8d6e5 !important;
+    text-align: left !important;
+    font-size: 0.82rem !important;
+    padding: 7px 12px !important;
+    border-radius: 6px !important;
+    transition: background 0.15s !important;
+    justify-content: flex-start !important;
+}
+[data-testid="stSidebar"] button:hover {
+    background: rgba(255,255,255,0.08) !important;
+    color: #fff !important;
+}
+[data-testid="stSidebar"] button:focus {
+    box-shadow: none !important;
+}
+/* Section headers in sidebar */
+.sidebar-section {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #5a7a9a;
+    padding: 14px 4px 4px;
+    margin-top: 4px;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # --- Sidebar (navigation) ---
 with st.sidebar:
     st.markdown("""
-<div style="padding:4px 0 12px;">
-  <div style="font-size:1.3rem;font-weight:900;letter-spacing:-0.5px;color:#1a1a2e;">K-AISecMap</div>
-  <div style="font-size:0.72rem;color:#888;margin-top:2px;line-height:1.4;">
+<div style="padding:12px 0 8px;">
+  <div style="font-size:1.4rem;font-weight:900;letter-spacing:-0.5px;color:#fff;">K-AISecMap</div>
+  <div style="font-size:0.68rem;color:#5a7a9a;margin-top:4px;line-height:1.4;letter-spacing:0.5px;">
     AI Security Mapping Advisor
   </div>
 </div>
@@ -98,33 +143,64 @@ with st.sidebar:
 
     st.divider()
 
-    MENU_ITEMS = [
-        ("🏠", "홈",                "home"),
-        ("🔍", "지식 탐색",         "explorer"),
-        ("🌐", "OWASP LLM Top 10", "owasp"),
-        ("🔥", "사고 사례",         "incidents"),
-        ("✅", "체크리스트",        "checklist"),
-        ("🔌", "MCP 연결",         "mcp"),
-    ]
-    menu_labels = [f"{icon}  {label}" for icon, label, _ in MENU_ITEMS]
-    menu_keys   = [key for _, _, key in MENU_ITEMS]
+    ALL_MENU = {
+        "home": "홈",
+        "explorer": "NIS AI보안 가이드 — 위협·대책",
+        "incidents": "사고 사례",
+        "checklist": "체크리스트 생성기",
+        "owasp": "OWASP LLM Top 10",
+        "mcp": "MCP 연결",
+    }
 
-    selected_label = st.radio(
-        "메뉴",
-        menu_labels,
-        label_visibility="collapsed",
-    )
-    page = menu_keys[menu_labels.index(selected_label)]
+    # Check for card-based navigation
+    nav_override = st.session_state.pop("_nav", None)
+    if nav_override and nav_override in ALL_MENU:
+        st.session_state["_page"] = nav_override
 
-    st.divider()
-    st.markdown("📄 **관련 문서**")
-    st.markdown("- [NIS AI보안 가이드북](https://www.nis.go.kr)")
-    st.markdown("- [OWASP LLM Top 10](https://genai.owasp.org/)")
-    st.markdown("- [MITRE ATLAS](https://atlas.mitre.org/)")
+    current_page = st.session_state.get("_page", "home")
+
+    def _nav_button(key, label, section=None):
+        is_active = (current_page == key)
+        if section:
+            st.markdown(f'<div class="sidebar-section">{section}</div>', unsafe_allow_html=True)
+        active_style = "background:rgba(47,85,165,0.3);color:#fff;font-weight:700;" if is_active else "color:#c8d6e5;"
+        st.markdown(
+            f'<div style="padding:7px 12px;border-radius:6px;font-size:0.82rem;cursor:pointer;{active_style}">{label}</div>',
+            unsafe_allow_html=True
+        )
+        return st.button(label, key=f"nav_{key}", label_visibility="collapsed", use_container_width=True) if not is_active else False
+
+    # Build nav with section headers using simple buttons
+    st.markdown('<div class="sidebar-section">국내 기준</div>', unsafe_allow_html=True)
+    for key in ["home", "explorer", "incidents", "checklist"]:
+        if st.button(ALL_MENU[key], key=f"nav_{key}", use_container_width=True):
+            st.session_state["_page"] = key
+            st.rerun()
+
+    st.markdown('<div class="sidebar-section">해외 기준</div>', unsafe_allow_html=True)
+    for key in ["owasp"]:
+        if st.button(ALL_MENU[key], key=f"nav_{key}", use_container_width=True):
+            st.session_state["_page"] = key
+            st.rerun()
+
+    st.markdown('<div class="sidebar-section">도구</div>', unsafe_allow_html=True)
+    for key in ["mcp"]:
+        if st.button(ALL_MENU[key], key=f"nav_{key}", use_container_width=True):
+            st.session_state["_page"] = key
+            st.rerun()
+
+    page = current_page
+
     st.divider()
     stats = kg.summary()
-    st.caption(f"📊 {stats['total_threats']} 위협 · {stats['total_measures']} 대책 · {len(kg.incidents)} 사고사례")
-    st.caption("[k-ai-sec.streamlit.app](https://k-ai-sec.streamlit.app) · [github.com/sulgik/kais](https://github.com/sulgik/kais)")
+    st.markdown(
+        f'<div style="font-size:0.7rem;color:#5a7a9a;line-height:1.8;padding:0 4px;">'
+        f'{stats["total_threats"]} NIS 위협 · {stats["atlas_techniques"]} ATLAS 기법 · {stats["atlas_case_studies"]} 사례연구<br>'
+        f'{stats["total_measures"]} 대책 · {stats["atlas_mitigations"]} ATLAS 완화책 · {stats["nist_functions"]} NIST 기능<br>'
+        f'<a href="https://k-ai-sec.streamlit.app" style="color:#5a7a9a;">k-ai-sec.streamlit.app</a> · '
+        f'<a href="https://github.com/sulgik/kais" style="color:#5a7a9a;">GitHub</a>'
+        f'</div>', unsafe_allow_html=True
+    )
 
 # --- Title ---
 st.markdown("""
@@ -139,7 +215,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.warning(
-    "**⚠️ 실험적 서비스 (Experimental)** — 연구·교육 목적의 비공식 서비스이며 국가정보원(NIS)과 무관합니다. "
+    "**실험적 서비스 (Experimental)** — 연구·교육 목적의 비공식 서비스이며 국가정보원(NIS)과 무관합니다. "
     "NIS AI보안 가이드북(2025.12) 기반으로 생성되며 공식 보안 검토를 대체하지 않습니다.",
     icon="⚠️",
 )
@@ -189,13 +265,24 @@ def _render_node_detail(sel_id: str):
     # ATLAS Case Study
     elif sel_id in kg._case_study_by_id:
         cs = kg._case_study_by_id[sel_id]
-        st.markdown(f"### 🟣 {cs['name_ko']}")
+        cs_ko = kg.atlas_name_ko(cs["id"])
+        st.markdown(f"### 🟣 {cs_ko}")
         st.markdown(f"*{cs['name']}*")
+        if cs.get("summary"):
+            st.markdown(cs["summary"][:300] + "…" if len(cs.get("summary", "")) > 300 else cs.get("summary", ""))
         threat_ids = kg._case_study_threats.get(sel_id, [])
         if threat_ids:
             badges = " ".join(_t_badge(tid) for tid in threat_ids)
             st.markdown(f"**관련 NIS 위협:** {badges}", unsafe_allow_html=True)
-        st.markdown(f"[ATLAS 원문 →]({cs.get('url', '')})")
+        # Show techniques used
+        if cs.get("technique_ids"):
+            tech_names = [f"`{tid}` {kg.atlas_name_ko(tid)}" for tid in cs["technique_ids"]]
+            st.markdown("**사용 기법:** " + " · ".join(tech_names))
+        refs = cs.get("references", [])
+        if refs:
+            st.markdown(f"[ATLAS 원문 →]({refs[0]})")
+        elif cs.get("url"):
+            st.markdown(f"[ATLAS 원문 →]({cs['url']})")
     # OWASP
     elif sel_id in kg._owasp_by_id:
         item = kg._owasp_by_id[sel_id]
@@ -258,7 +345,8 @@ def _build_sankey(show_nis_pair: bool, show_ext_pair: bool):
             threat_ids = kg._case_study_threats.get(cs["id"], [])
             if not threat_ids:
                 continue
-            src_label = f"{cs['id'][:8]} {_strip_ai(cs['name_ko'])}"
+            cs_ko = kg.atlas_name_ko(cs["id"])
+            src_label = f"{cs['id'][:8]} {_strip_ai(cs_ko)}"
             for tid in threat_ids:
                 t = kg.get_threat(tid)
                 if t:
@@ -408,103 +496,143 @@ if page == "home":
 </div>
 """, unsafe_allow_html=True)
 
-    # ── 3-column framework cards ───────────────────────────
+    # ── 3-column framework cards (with links) ───────────────
     col_nis, col_owasp, col_atlas = st.columns(3, gap="large")
-    card_style = "border:1px solid #e5e5e5;border-radius:10px;padding:20px 18px;height:100%;"
 
     with col_nis:
-        st.markdown(f"""
-<div style="{card_style}border-top:4px solid #1a1a2e;">
-  <div style="font-size:1.05rem;font-weight:800;color:#1a1a2e;">NIS AI보안 가이드북</div>
-  <div style="font-size:0.78rem;color:#555;margin-bottom:10px;">국가정보원 · 2025년 12월</div>
-</div>""", unsafe_allow_html=True)
         st.markdown("""
-**보안위협 T01~T15** — 학습데이터 오염, 프롬프트 인젝션, 회피 공격 등 15개 유형
-**보안대책 M01~M30 + A-M · P-M** — 공통 + 에이전틱·피지컬 AI 전용 대책
-**구축유형별 가이드** — 내부망 / 외부망 / 대민서비스 / 상용 AI
-""")
+<div style="border:1px solid #d0d5dd;border-radius:10px;padding:20px 18px;border-top:4px solid #1a1a2e;">
+  <div style="font-size:1.05rem;font-weight:800;color:#1a1a2e;">NIS AI보안 가이드북</div>
+  <div style="font-size:0.75rem;color:#888;margin-bottom:10px;">국가정보원 · 2025년 12월</div>
+  <div style="font-size:0.85rem;line-height:1.6;color:#444;">
+    <b>보안위협 T01~T15</b> — 15개 AI 위협 유형<br>
+    <b>보안대책 M01~M30 + A-M · P-M</b><br>
+    <b>구축유형별</b> 내부망 / 외부망 / 대민 / 상용
+  </div>
+</div>""", unsafe_allow_html=True)
+        lc1, lc2 = st.columns(2)
+        with lc1:
+            st.page_link("https://www.nis.go.kr", label="원문 보기", icon="🔗")
+        with lc2:
+            if st.button("위협·대책 보기", key="card_nis", use_container_width=True):
+                st.session_state["_nav"] = "explorer"
+                st.rerun()
 
     with col_owasp:
-        st.markdown(f"""
-<div style="{card_style}border-top:4px solid #f58220;">
-  <div style="font-size:1.05rem;font-weight:800;color:#f58220;">OWASP LLM Top 10</div>
-  <div style="font-size:0.78rem;color:#555;margin-bottom:10px;">Open Worldwide Application Security Project · 2025</div>
-</div>""", unsafe_allow_html=True)
         st.markdown("""
-**LLM01** 프롬프트 인젝션 · **LLM02** 민감정보 노출 · **LLM03** 공급망
-**LLM04** 데이터 오염 · **LLM05~10** 출력처리·권한·유출 등
-NIS 위협·대책과 **양방향 교차 매핑** 제공
-""")
+<div style="border:1px solid #d0d5dd;border-radius:10px;padding:20px 18px;border-top:4px solid #f58220;">
+  <div style="font-size:1.05rem;font-weight:800;color:#f58220;">OWASP LLM Top 10</div>
+  <div style="font-size:0.75rem;color:#888;margin-bottom:10px;">OWASP · 2025</div>
+  <div style="font-size:0.85rem;line-height:1.6;color:#444;">
+    LLM 10대 취약점 — 프롬프트 인젝션,<br>
+    민감정보 노출, 공급망, 데이터 오염 등<br>
+    NIS 위협·대책과 <b>양방향 교차 매핑</b>
+  </div>
+</div>""", unsafe_allow_html=True)
+        lc1, lc2 = st.columns(2)
+        with lc1:
+            st.page_link("https://genai.owasp.org/", label="원문 보기", icon="🔗")
+        with lc2:
+            if st.button("OWASP 매핑", key="card_owasp", use_container_width=True):
+                st.session_state["_nav"] = "owasp"
+                st.rerun()
 
     with col_atlas:
         st.markdown(f"""
-<div style="{card_style}border-top:4px solid #7b2d8e;">
+<div style="border:1px solid #d0d5dd;border-radius:10px;padding:20px 18px;border-top:4px solid #7b2d8e;">
   <div style="font-size:1.05rem;font-weight:800;color:#7b2d8e;">MITRE ATLAS</div>
-  <div style="font-size:0.78rem;color:#555;margin-bottom:10px;">Adversarial Threat Landscape for AI Systems</div>
+  <div style="font-size:0.75rem;color:#888;margin-bottom:10px;">Adversarial Threat Landscape for AI Systems</div>
+  <div style="font-size:0.85rem;line-height:1.6;color:#444;">
+    <b>{len(kg.atlas_tactics)}개 전술</b> · <b>{len(kg.atlas_techniques)}개 기법</b><br>
+    NIS(T##) ↔ ATLAS(AML.T####) ↔ OWASP(LLM##)<br>
+    <b>3자 교차 매핑</b> 제공
+  </div>
 </div>""", unsafe_allow_html=True)
-        st.markdown(f"""
-**{len(kg.atlas_tactics)}개 전술** — 공격 킬체인 각 단계
-**{len(kg.atlas_techniques)}개 기법** — 구체적 공격 기법
-NIS 위협(T##) ↔ ATLAS(AML.T####) ↔ OWASP(LLM##) **3자 교차 매핑**
-""")
+        lc1, lc2 = st.columns(2)
+        with lc1:
+            st.page_link("https://atlas.mitre.org/", label="원문 보기", icon="🔗")
+        with lc2:
+            if st.button("위협 탐색", key="card_atlas", use_container_width=True):
+                st.session_state["_nav"] = "explorer"
+                st.rerun()
 
     st.divider()
 
     # ── Map section ────────────────────────────────────────
-    st.markdown("### 🗺️ AI 보안 프레임워크 통합 지도")
+    st.markdown("""
+<div style="font-size:1.15rem;font-weight:800;color:#1a1a2e;margin-bottom:4px;">
+  AI 보안 프레임워크 통합 지도
+</div>""", unsafe_allow_html=True)
     st.caption("노드를 클릭하면 오른쪽에 상세 정보가 표시됩니다. 드래그·스크롤로 탐색하세요.")
 
-    # Filters
-    filter_col1, filter_col2 = st.columns(2)
-    with filter_col1:
-        map_view = st.radio(
-            "표시할 매핑",
-            ["🔴 NIS 위협 ↔ 🟠 OWASP ↔ 🟣 ATLAS ↔ ⭐ 사고사례", "🔴 NIS 위협 ↔ 🔵 대책"],
-            key="home_map_pair", horizontal=True, label_visibility="collapsed",
-        )
-    with filter_col2:
-        viz_mode = st.radio(
-            "시각화 모드",
-            ["🕸️ 네트워크 그래프", "🌊 Sankey 흐름도"],
-            key="home_viz_mode", horizontal=True, label_visibility="collapsed",
-        )
+    # View selector
+    MAP_VIEWS = [
+        "NIS 사고사례 → 위협 → 대책",
+        "NIS 위협 → 대책 (Sankey)",
+        "NIS ↔ OWASP ↔ ATLAS 통합",
+        "NIS 위협 → ATLAS → OWASP (3자 매핑)",
+    ]
+    map_view = st.radio(
+        "지도 유형",
+        MAP_VIEWS,
+        key="home_map_view", horizontal=True, label_visibility="collapsed",
+    )
 
-    show_nis_pair = map_view.startswith("🔴 NIS 위협 ↔ 🔵")
-    show_ext_pair = not show_nis_pair
+    # Determine graph params based on selection
+    use_sankey = ("Sankey" in map_view)
 
-    # Legend
-    if show_nis_pair:
-        st.markdown(
-            '<span style="font-size:0.85em;">'
+    if map_view == MAP_VIEWS[0]:
+        # NIS 사고사례 → 위협 → 대책
+        gp = dict(show_nis=True, show_owasp=False, show_measures=True,
+                  show_incidents=True, show_case_studies=False)
+        legend_html = (
+            '<span style="display:inline-block;width:12px;height:12px;background:#e74c3c;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);vertical-align:middle;"></span> <b>사고사례</b> &nbsp; '
             '<span style="display:inline-block;width:12px;height:12px;background:#ed1c24;border-radius:50%;vertical-align:middle;"></span> <b>NIS 위협</b> &nbsp; '
             '<span style="display:inline-block;width:12px;height:12px;background:#2f55a5;transform:rotate(45deg);vertical-align:middle;"></span> <b>NIS 대책</b>'
-            '</span>', unsafe_allow_html=True,
+        )
+    elif map_view == MAP_VIEWS[1]:
+        # Sankey: 위협 → 대책
+        gp = dict(show_nis=True, show_owasp=False, show_measures=True,
+                  show_incidents=False, show_case_studies=False)
+        legend_html = ""
+    elif map_view == MAP_VIEWS[2]:
+        # 통합
+        gp = dict(show_nis=True, show_owasp=True, show_measures=False,
+                  show_incidents=True, show_case_studies=True)
+        legend_html = (
+            '<span style="display:inline-block;width:12px;height:12px;background:#ed1c24;border-radius:50%;vertical-align:middle;"></span> <b>NIS 위협</b> &nbsp; '
+            '<span style="display:inline-block;width:12px;height:12px;background:#e74c3c;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);vertical-align:middle;"></span> <b>사고사례</b> &nbsp; '
+            '<span style="display:inline-block;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:12px solid #9b59b6;vertical-align:middle;"></span> <b>ATLAS</b> &nbsp; '
+            '<span style="display:inline-block;width:12px;height:12px;background:#f58220;vertical-align:middle;"></span> <b>OWASP</b>'
         )
     else:
-        st.markdown(
-            '<span style="font-size:0.85em;">'
+        # 3자 매핑 — NIS + OWASP + ATLAS (no incidents, no measures)
+        gp = dict(show_nis=True, show_owasp=True, show_measures=False,
+                  show_incidents=False, show_case_studies=True)
+        legend_html = (
             '<span style="display:inline-block;width:12px;height:12px;background:#ed1c24;border-radius:50%;vertical-align:middle;"></span> <b>NIS 위협</b> &nbsp; '
-            '<span style="display:inline-block;width:12px;height:12px;background:#e74c3c;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);vertical-align:middle;"></span> <b>NIS 사고사례</b> &nbsp; '
-            '<span style="display:inline-block;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:12px solid #9b59b6;vertical-align:middle;"></span> <b>ATLAS 사례연구</b> &nbsp; '
+            '<span style="display:inline-block;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:12px solid #9b59b6;vertical-align:middle;"></span> <b>ATLAS</b> &nbsp; '
             '<span style="display:inline-block;width:12px;height:12px;background:#f58220;vertical-align:middle;"></span> <b>OWASP</b>'
-            '</span>', unsafe_allow_html=True,
         )
+
+    if legend_html:
+        st.markdown(f'<span style="font-size:0.82em;">{legend_html}</span>', unsafe_allow_html=True)
 
     # Graph + Detail side-by-side
     col_graph, col_detail = st.columns([3, 1])
 
     with col_graph:
-        if viz_mode == "🕸️ 네트워크 그래프":
+        if use_sankey:
+            fig = _build_sankey(show_nis_pair=True, show_ext_pair=False)
+            if fig:
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("매핑 데이터가 없습니다.")
+        else:
             try:
                 from streamlit_agraph import agraph, Node, Edge, Config
 
-                graph_data = kg.build_graph_data(
-                    show_nis=True,
-                    show_owasp=show_ext_pair,
-                    show_measures=show_nis_pair,
-                    show_incidents=show_ext_pair,
-                    show_case_studies=show_ext_pair,
-                )
+                graph_data = kg.build_graph_data(**gp)
 
                 agraph_nodes = []
                 for n in graph_data["nodes"]:
@@ -532,13 +660,6 @@ NIS 위협(T##) ↔ ATLAS(AML.T####) ↔ OWASP(LLM##) **3자 교차 매핑**
 
             except ImportError:
                 st.error("streamlit-agraph가 설치되지 않았습니다.")
-        else:
-            # Sankey
-            fig = _build_sankey(show_nis_pair, show_ext_pair)
-            if fig:
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("위에서 표시할 매핑을 선택하세요.")
 
     with col_detail:
         sel_id = st.session_state.get("home_selected")
@@ -660,7 +781,7 @@ elif page == "owasp":
                 for aid in sorted(atlas_ids):
                     tech = kg.get_atlas_technique(aid)
                     if tech:
-                        st.markdown(f"- {_atlas_badge(aid)} [{tech['name_ko']}]({tech.get('url', '')}) — {tech['name']}", unsafe_allow_html=True)
+                        st.markdown(f"- {_atlas_badge(aid)} [{kg.atlas_name_ko(aid)}]({tech.get('url', '')}) — {tech['name']}", unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════
 # Page: Incidents

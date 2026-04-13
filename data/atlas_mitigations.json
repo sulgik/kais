@@ -1,0 +1,752 @@
+[
+  {
+    "id": "AML.M0000",
+    "name": "Limit Public Release of Information",
+    "description": "Limit the public release of technical information about the AI stack used in an organization's products or services. Technical knowledge of how AI is used can be leveraged by adversaries to perform targeting and tailor attacks to the target system. Additionally, consider limiting the release of organizational information - including physical locations, researcher names, and department structures - from which technical details such as AI techniques, model architectures, or datasets may be inferred.",
+    "technique_ids": [
+      "AML.T0000",
+      "AML.T0003",
+      "AML.T0002",
+      "AML.T0004",
+      "AML.T0005",
+      "AML.T0005.000",
+      "AML.T0005.002"
+    ],
+    "category": [
+      "Policy"
+    ],
+    "ml_lifecycle": [
+      "Business and Data Understanding"
+    ]
+  },
+  {
+    "id": "AML.M0001",
+    "name": "Limit Model Artifact Release",
+    "description": "Limit public release of technical project details including data, algorithms, model architectures, and model checkpoints that are used in production, or that are representative of those used in production.\n",
+    "technique_ids": [
+      "AML.T0002.000",
+      "AML.T0002.001",
+      "AML.T0020",
+      "AML.T0005",
+      "AML.T0035",
+      "AML.T0005.000"
+    ],
+    "category": [
+      "Policy"
+    ],
+    "ml_lifecycle": [
+      "Business and Data Understanding",
+      "Deployment"
+    ]
+  },
+  {
+    "id": "AML.M0002",
+    "name": "Passive AI Output Obfuscation",
+    "description": "Decreasing the fidelity of model outputs provided to the end user can reduce an adversary's ability to extract information about the model and optimize attacks for the model.",
+    "technique_ids": [
+      "AML.T0013",
+      "AML.T0014",
+      "AML.T0043.001",
+      "AML.T0024.000",
+      "AML.T0024.001",
+      "AML.T0024.002",
+      "AML.T0043",
+      "AML.T0043.001",
+      "AML.T0005",
+      "AML.T0042",
+      "AML.T0005.001",
+      "AML.T0063"
+    ],
+    "category": [
+      "Technical - ML"
+    ],
+    "ml_lifecycle": [
+      "Deployment",
+      "ML Model Evaluation"
+    ]
+  },
+  {
+    "id": "AML.M0003",
+    "name": "Model Hardening",
+    "description": "Use techniques to make AI models robust to adversarial inputs such as adversarial training or network distillation.",
+    "technique_ids": [
+      "AML.T0015",
+      "AML.T0031",
+      "AML.T0043",
+      "AML.T0043.001",
+      "AML.T0043.002",
+      "AML.T0043.003",
+      "AML.T0043.000",
+      "AML.T0043.004"
+    ],
+    "category": [
+      "Technical - ML"
+    ],
+    "ml_lifecycle": [
+      "Data Preparation",
+      "ML Model Engineering"
+    ]
+  },
+  {
+    "id": "AML.M0004",
+    "name": "Restrict Number of AI Model Queries",
+    "description": "Limit the total number and rate of queries a user can perform.\n",
+    "technique_ids": [
+      "AML.T0034",
+      "AML.T0013",
+      "AML.T0014",
+      "AML.T0024",
+      "AML.T0024.000",
+      "AML.T0024.001",
+      "AML.T0024.002",
+      "AML.T0043.001",
+      "AML.T0029",
+      "AML.T0046",
+      "AML.T0043",
+      "AML.T0043.001",
+      "AML.T0043.003",
+      "AML.T0005",
+      "AML.T0005.001",
+      "AML.T0042",
+      "AML.T0062"
+    ],
+    "category": [
+      "Technical - Cyber"
+    ],
+    "ml_lifecycle": [
+      "Business and Data Understanding",
+      "Deployment",
+      "Monitoring and Maintenance"
+    ]
+  },
+  {
+    "id": "AML.M0005",
+    "name": "Control Access to AI Models and Data at Rest",
+    "description": "Establish access controls on internal model registries and limit internal access to production models. Limit access to training data only to approved users.\n",
+    "technique_ids": [
+      "AML.T0010.002",
+      "AML.T0020",
+      "AML.T0018.000",
+      "AML.T0018.001",
+      "AML.T0010.003",
+      "AML.T0025",
+      "AML.T0048.004",
+      "AML.T0018",
+      "AML.T0043.000",
+      "AML.T0007",
+      "AML.T0044",
+      "AML.T0035",
+      "AML.T0042"
+    ],
+    "category": [
+      "Policy"
+    ],
+    "ml_lifecycle": [
+      "Business and Data Understanding",
+      "Data Preparation",
+      "ML Model Evaluation",
+      "ML Model Engineering"
+    ]
+  },
+  {
+    "id": "AML.M0006",
+    "name": "Use Ensemble Methods",
+    "description": "Use an ensemble of models for inference to increase robustness to adversarial inputs. Some attacks may effectively evade one model or model family but be ineffective against others.\n",
+    "technique_ids": [
+      "AML.T0031",
+      "AML.T0010.001",
+      "AML.T0010.003",
+      "AML.T0015",
+      "AML.T0014",
+      "AML.T0043.000",
+      "AML.T0043.001",
+      "AML.T0043.002",
+      "AML.T0043.004",
+      "AML.T0043.003",
+      "AML.T0043"
+    ],
+    "category": [
+      "Technical - ML"
+    ],
+    "ml_lifecycle": [
+      "ML Model Engineering"
+    ]
+  },
+  {
+    "id": "AML.M0007",
+    "name": "Sanitize Training Data",
+    "description": "Detect and remove or remediate poisoned training data.  Training data should be sanitized prior to model training and recurrently for an active learning model.\n\nImplement a filter to limit ingested training data.  Establish a content policy that would remove unwanted content such as certain explicit or offensive language from being used.\n",
+    "technique_ids": [
+      "AML.T0010.002",
+      "AML.T0020",
+      "AML.T0018.000",
+      "AML.T0059"
+    ],
+    "category": [
+      "Technical - ML"
+    ],
+    "ml_lifecycle": [
+      "Business and Data Understanding",
+      "Data Preparation",
+      "Monitoring and Maintenance"
+    ]
+  },
+  {
+    "id": "AML.M0008",
+    "name": "Validate AI Model",
+    "description": "Validate that AI models perform as intended by testing for backdoor triggers, potential for data leakage, or adversarial influence.\nMonitor AI model for concept drift and training data drift, which may indicate data tampering and poisoning.",
+    "technique_ids": [
+      "AML.T0010.003",
+      "AML.T0018.000",
+      "AML.T0018.001",
+      "AML.T0018",
+      "AML.T0043.004",
+      "AML.T0020",
+      "AML.T0057",
+      "AML.T0043"
+    ],
+    "category": [
+      "Technical - ML"
+    ],
+    "ml_lifecycle": [
+      "ML Model Evaluation",
+      "Monitoring and Maintenance"
+    ]
+  },
+  {
+    "id": "AML.M0009",
+    "name": "Use Multi-Modal Sensors",
+    "description": "Incorporate multiple sensors to integrate varying perspectives and modalities to avoid a single point of failure susceptible to physical attacks.\n",
+    "technique_ids": [
+      "AML.T0041",
+      "AML.T0015",
+      "AML.T0088"
+    ],
+    "category": [
+      "Technical - Cyber"
+    ],
+    "ml_lifecycle": [
+      "Business and Data Understanding",
+      "Data Preparation",
+      "ML Model Engineering"
+    ]
+  },
+  {
+    "id": "AML.M0010",
+    "name": "Input Restoration",
+    "description": "Preprocess all inference data to nullify or reverse potential adversarial perturbations.\n",
+    "technique_ids": [
+      "AML.T0043.001",
+      "AML.T0015",
+      "AML.T0031",
+      "AML.T0043",
+      "AML.T0043.002",
+      "AML.T0043.004",
+      "AML.T0043.000",
+      "AML.T0043.003"
+    ],
+    "category": [
+      "Technical - ML"
+    ],
+    "ml_lifecycle": [
+      "Data Preparation",
+      "ML Model Evaluation",
+      "Deployment",
+      "Monitoring and Maintenance"
+    ]
+  },
+  {
+    "id": "AML.M0011",
+    "name": "Restrict Library Loading",
+    "description": "Prevent abuse of library loading mechanisms in the operating system and software to load untrusted code by configuring appropriate library loading mechanisms and investigating potential vulnerable software.\n\nFile formats such as pickle files that are commonly used to store AI models can contain exploits that allow for loading of malicious libraries.",
+    "technique_ids": [
+      "AML.T0011.000",
+      "AML.T0011.001",
+      "AML.T0011"
+    ],
+    "category": [
+      "Technical - Cyber"
+    ],
+    "ml_lifecycle": [
+      "Deployment"
+    ]
+  },
+  {
+    "id": "AML.M0012",
+    "name": "Encrypt Sensitive Information",
+    "description": "Encrypt sensitive data such as AI models to protect against adversaries attempting to access sensitive data.",
+    "technique_ids": [
+      "AML.T0035",
+      "AML.T0048.004",
+      "AML.T0007",
+      "AML.T0063"
+    ],
+    "category": [
+      "Technical - Cyber"
+    ],
+    "ml_lifecycle": [
+      "Data Preparation",
+      "ML Model Engineering",
+      "Deployment"
+    ]
+  },
+  {
+    "id": "AML.M0013",
+    "name": "Code Signing",
+    "description": "Enforce binary and application integrity with digital signature verification to prevent untrusted code from executing. Adversaries can embed malicious code in AI software or models. Developers should also cryptographically sign SBOM and AIBOM components that track model or data provenance. Enforcement of code signing can prevent the compromise of the AI supply chain and prevent execution of malicious code.",
+    "technique_ids": [
+      "AML.T0011.000",
+      "AML.T0010.001",
+      "AML.T0010.003",
+      "AML.T0018",
+      "AML.T0018.000",
+      "AML.T0018.001",
+      "AML.T0018.002",
+      "AML.T0011.001"
+    ],
+    "category": [
+      "Technical - Cyber"
+    ],
+    "ml_lifecycle": [
+      "Deployment"
+    ]
+  },
+  {
+    "id": "AML.M0014",
+    "name": "Verify AI Artifacts",
+    "description": "Verify the cryptographic checksum of all AI artifacts to verify that the file was not modified by an attacker.",
+    "technique_ids": [
+      "AML.T0019",
+      "AML.T0011.000",
+      "AML.T0010",
+      "AML.T0010.002",
+      "AML.T0002.001",
+      "AML.T0011"
+    ],
+    "category": [
+      "Technical - Cyber"
+    ],
+    "ml_lifecycle": [
+      "Business and Data Understanding",
+      "Data Preparation",
+      "ML Model Engineering"
+    ]
+  },
+  {
+    "id": "AML.M0015",
+    "name": "Adversarial Input Detection",
+    "description": "Detect and block adversarial inputs or atypical queries that deviate from known benign behavior, exhibit behavior patterns observed in previous attacks or that come from potentially malicious IPs.\nIncorporate adversarial detection algorithms into the AI system prior to the AI model.",
+    "technique_ids": [
+      "AML.T0015",
+      "AML.T0043.001",
+      "AML.T0029",
+      "AML.T0031",
+      "AML.T0043",
+      "AML.T0043.000",
+      "AML.T0043.002",
+      "AML.T0043.004",
+      "AML.T0043.003"
+    ],
+    "category": [
+      "Technical - ML"
+    ],
+    "ml_lifecycle": [
+      "Data Preparation",
+      "ML Model Engineering",
+      "ML Model Evaluation",
+      "Deployment",
+      "Monitoring and Maintenance"
+    ]
+  },
+  {
+    "id": "AML.M0016",
+    "name": "Vulnerability Scanning",
+    "description": "Vulnerability scanning is used to find potentially exploitable software vulnerabilities to remediate them.\n\nFile formats such as pickle files that are commonly used to store AI models can contain exploits that allow for arbitrary code execution.\nThese files should be scanned for potentially unsafe calls, which could be used to execute code, create new processes, or establish networking capabilities.\nAdversaries may embed malicious code in model corrupt model files, so scanners should be capable of working with models that cannot be fully de-serialized.\nModel artifacts, downstream products produced by models, and external software dependencies should be scanned for known vulnerabilities.",
+    "technique_ids": [
+      "AML.T0011.000",
+      "AML.T0011.001",
+      "AML.T0011"
+    ],
+    "category": [
+      "Technical - Cyber"
+    ],
+    "ml_lifecycle": [
+      "ML Model Engineering",
+      "Data Preparation"
+    ]
+  },
+  {
+    "id": "AML.M0017",
+    "name": "AI Model Distribution Methods",
+    "description": "Deploying AI models to edge devices can increase the attack surface of the system.\nConsider serving models in the cloud to reduce the level of access the adversary has to the model.\nAlso consider computing features in the cloud to prevent gray-box attacks, where an adversary has access to the model preprocessing methods.",
+    "technique_ids": [
+      "AML.T0044",
+      "AML.T0043.000",
+      "AML.T0010.003",
+      "AML.T0048.004",
+      "AML.T0035",
+      "AML.T0063"
+    ],
+    "category": [
+      "Policy"
+    ],
+    "ml_lifecycle": [
+      "Deployment"
+    ]
+  },
+  {
+    "id": "AML.M0018",
+    "name": "User Training",
+    "description": "Educate AI model developers to on AI supply chain risks and potentially malicious AI artifacts.\nEducate users on how to identify deepfakes and phishing attempts.",
+    "technique_ids": [
+      "AML.T0011",
+      "AML.T0011.000",
+      "AML.T0052",
+      "AML.T0052.000",
+      "AML.T0011.001"
+    ],
+    "category": [
+      "Policy"
+    ],
+    "ml_lifecycle": [
+      "Business and Data Understanding",
+      "Data Preparation",
+      "ML Model Engineering",
+      "ML Model Evaluation",
+      "Deployment",
+      "Monitoring and Maintenance"
+    ]
+  },
+  {
+    "id": "AML.M0019",
+    "name": "Control Access to AI Models and Data in Production",
+    "description": "Require users to verify their identities before accessing a production model.\nRequire authentication for API endpoints and monitor production model queries to ensure compliance with usage policies and to prevent model misuse.\n",
+    "technique_ids": [
+      "AML.T0040",
+      "AML.T0024",
+      "AML.T0034",
+      "AML.T0043",
+      "AML.T0043.001",
+      "AML.T0005",
+      "AML.T0029",
+      "AML.T0051",
+      "AML.T0046",
+      "AML.T0042",
+      "AML.T0063"
+    ],
+    "category": [
+      "Policy"
+    ],
+    "ml_lifecycle": [
+      "Deployment",
+      "Monitoring and Maintenance"
+    ]
+  },
+  {
+    "id": "AML.M0020",
+    "name": "Generative AI Guardrails",
+    "description": "Guardrails are safety controls that are placed between a generative AI model and the output shared with the user to prevent undesired inputs and outputs.\nGuardrails can take the form of validators such as filters, rule-based logic, or regular expressions, as well as AI-based approaches, such as classifiers and utilizing LLMs, or named entity recognition (NER) to evaluate the safety of the prompt or response. Domain specific methods can be employed to reduce risks in a variety of areas such as etiquette, brand damage, jailbreaking, false information, code exploits, SQL injections, and data leakage.",
+    "technique_ids": [
+      "AML.T0054",
+      "AML.T0056",
+      "AML.T0053",
+      "AML.T0051",
+      "AML.T0057",
+      "AML.T0010",
+      "AML.T0061",
+      "AML.T0062"
+    ],
+    "category": [
+      "Technical - ML"
+    ],
+    "ml_lifecycle": [
+      "ML Model Engineering",
+      "ML Model Evaluation",
+      "Deployment"
+    ]
+  },
+  {
+    "id": "AML.M0021",
+    "name": "Generative AI Guidelines",
+    "description": "Guidelines are safety controls that are placed between user-provided input and a generative AI model to help direct the model to produce desired outputs and prevent undesired outputs.\n\nGuidelines can be implemented as instructions appended to all user prompts or as part of the instructions in the system prompt. They can define the goal(s), role, and voice of the system, as well as outline safety and security parameters.",
+    "technique_ids": [
+      "AML.T0054",
+      "AML.T0056",
+      "AML.T0053",
+      "AML.T0051",
+      "AML.T0057",
+      "AML.T0061",
+      "AML.T0062"
+    ],
+    "category": [
+      "Technical - ML"
+    ],
+    "ml_lifecycle": [
+      "ML Model Engineering",
+      "ML Model Evaluation",
+      "Deployment"
+    ]
+  },
+  {
+    "id": "AML.M0022",
+    "name": "Generative AI Model Alignment",
+    "description": "When training or fine-tuning a generative AI model it is important to utilize techniques that improve model alignment with safety, security, and content policies.\n\nThe fine-tuning process can potentially remove built-in safety mechanisms in a generative AI model, but utilizing techniques such as Supervised Fine-Tuning, Reinforcement Learning from Human Feedback or AI Feedback, and Targeted Safety Context Distillation can improve the safety and alignment of the model.",
+    "technique_ids": [
+      "AML.T0054",
+      "AML.T0056",
+      "AML.T0053",
+      "AML.T0051",
+      "AML.T0057",
+      "AML.T0061",
+      "AML.T0062"
+    ],
+    "category": [
+      "Technical - ML"
+    ],
+    "ml_lifecycle": [
+      "ML Model Engineering",
+      "ML Model Evaluation",
+      "Deployment"
+    ]
+  },
+  {
+    "id": "AML.M0023",
+    "name": "AI Bill of Materials",
+    "description": "An AI Bill of Materials (AI BOM) contains a full listing of artifacts and resources that were used in building the AI. The AI BOM can help mitigate supply chain risks and enable rapid response to reported vulnerabilities.\n\nThis can include maintaining dataset provenance, i.e. a detailed history of datasets used for AI applications. The history can include information about the dataset source as well as well as a complete record of any modifications.",
+    "technique_ids": [
+      "AML.T0011.000",
+      "AML.T0019",
+      "AML.T0020",
+      "AML.T0058",
+      "AML.T0011.001",
+      "AML.T0011",
+      "AML.T0010"
+    ],
+    "category": [
+      "Policy"
+    ],
+    "ml_lifecycle": [
+      "Business and Data Understanding",
+      "Data Preparation",
+      "ML Model Engineering"
+    ]
+  },
+  {
+    "id": "AML.M0024",
+    "name": "AI Telemetry Logging",
+    "description": "Implement logging of inputs and outputs of deployed AI models. When deploying AI agents, implement logging of the intermediate steps of agentic actions and decisions, data access and tool use, installation commands, and identity of the agent. Monitoring logs can help to detect security threats and mitigate impacts.\n\nAdditionally, having logging enabled can discourage adversaries who want to remain undetected from utilizing AI resources.",
+    "technique_ids": [
+      "AML.T0024",
+      "AML.T0024.000",
+      "AML.T0024.001",
+      "AML.T0024.002",
+      "AML.T0005.001",
+      "AML.T0040",
+      "AML.T0047",
+      "AML.T0051",
+      "AML.T0051.000",
+      "AML.T0051.001",
+      "AML.T0051.002",
+      "AML.T0053",
+      "AML.T0086",
+      "AML.T0101",
+      "AML.T0085",
+      "AML.T0085.000",
+      "AML.T0085.001"
+    ],
+    "category": [
+      "Technical - Cyber"
+    ],
+    "ml_lifecycle": [
+      "Deployment",
+      "Monitoring and Maintenance"
+    ]
+  },
+  {
+    "id": "AML.M0025",
+    "name": "Maintain AI Dataset Provenance",
+    "description": "Maintain a detailed history of datasets used for AI applications. The history should include information about the dataset's source as well as a complete record of any modifications.",
+    "technique_ids": [
+      "AML.T0010.002",
+      "AML.T0020",
+      "AML.T0018.000",
+      "AML.T0019",
+      "AML.T0059"
+    ],
+    "category": [
+      "Technical - ML"
+    ],
+    "ml_lifecycle": [
+      "Data Preparation",
+      "Business and Data Understanding"
+    ]
+  },
+  {
+    "id": "AML.M0026",
+    "name": "Privileged AI Agent Permissions Configuration",
+    "description": "AI agents may be granted elevated privileges above that of a normal user to enable desired workflows. When deploying a privileged AI agent, or an agent that interacts with multiple users, it is important to implement robust policies and controls on permissions of the privileged agent. These controls include Role-Based Access Controls (RBAC), Attribute-Based Access Controls (ABAC), and the principle of least privilege so that the agent is only granted the necessary permissions to access tools and resources required to accomplish its designated task(s).",
+    "technique_ids": [
+      "AML.T0086",
+      "AML.T0053",
+      "AML.T0085",
+      "AML.T0085.000",
+      "AML.T0085.001",
+      "AML.T0082",
+      "AML.T0101"
+    ],
+    "category": [
+      "Technical - Cyber"
+    ],
+    "ml_lifecycle": [
+      "Deployment"
+    ]
+  },
+  {
+    "id": "AML.M0027",
+    "name": "Single-User AI Agent Permissions Configuration",
+    "description": "When deploying an AI agent that acts as a representative of a user and performs actions on their behalf, it is important to implement robust policies and controls on permissions and lifecycle management of the agent. Lifecycle management involves establishing identity, protocols for access management, and decommissioning of the agent when its role is no longer needed. Controls should also include the principle of least privilege and delegated access from the user account. When acting as a representative of a user, the AI agent should not be granted permissions that the user would not be granted within the system or organization.",
+    "technique_ids": [
+      "AML.T0086",
+      "AML.T0053",
+      "AML.T0085",
+      "AML.T0085.000",
+      "AML.T0085.001",
+      "AML.T0082",
+      "AML.T0101"
+    ],
+    "category": [
+      "Technical - Cyber"
+    ],
+    "ml_lifecycle": [
+      "Deployment"
+    ]
+  },
+  {
+    "id": "AML.M0028",
+    "name": "AI Agent Tools Permissions Configuration",
+    "description": "When deploying tools that will be shared across multiple AI agents, it is important to implement robust policies and controls on permissions for the tools. These controls include applying the principle of least privilege along with delegated access, where the tools receive the permissions, identities, and restrictions of the AI agent calling them. These configurations may be implemented either in MCP servers which connect the agents to the tools calling them or, in more complex cases, directly in the configuration files of the tool.",
+    "technique_ids": [
+      "AML.T0053",
+      "AML.T0085",
+      "AML.T0085.001",
+      "AML.T0101",
+      "AML.T0086"
+    ],
+    "category": [
+      "Technical - Cyber"
+    ],
+    "ml_lifecycle": [
+      "Deployment"
+    ]
+  },
+  {
+    "id": "AML.M0029",
+    "name": "Human In-the-Loop for AI Agent Actions",
+    "description": "Systems should require the user or another human stakeholder to approve AI agent actions before the agent takes them. The human approver may be technical staff or business unit SMEs depending on the use case. Separate tools, such as dedicated audit agents, may assist human approval, but final adjudication should be conducted by a human decision-maker. \n\nThe security benefits from Human In-the-Loop policies may be at odds with operational overhead costs of additional approvals. To ease this, Human In-the-Loop policies should follow the degree of consequence of the task at hand. Minor, repetitive tasks performed by agents accessing basic tools may only require minimal human oversight, while agents employed in systems with significant consequences may necessitate approval from multiple stakeholders diversified across multiple organizations.",
+    "technique_ids": [
+      "AML.T0086",
+      "AML.T0053",
+      "AML.T0101"
+    ],
+    "category": [
+      "Technical - ML"
+    ],
+    "ml_lifecycle": [
+      "Deployment"
+    ]
+  },
+  {
+    "id": "AML.M0030",
+    "name": "Restrict AI Agent Tool Invocation on Untrusted Data",
+    "description": "Untrusted data can contain prompt injections that invoke an AI agent's tools, potentially causing confidentiality, integrity or availability violations. It is recommended that tool invocation be restricted or limited when untrusted data enters the LLM's context.\n\nThe degree to which tool invocation is restricted may depend on the potential consequences of the action. Consider blocking the automatic invocation of tools or requiring user confirmation once untrusted data enters the LLM's context. For high consequence actions, consider always requiring user confirmation.",
+    "technique_ids": [
+      "AML.T0053",
+      "AML.T0086",
+      "AML.T0101"
+    ],
+    "category": [
+      "Technical - ML"
+    ],
+    "ml_lifecycle": [
+      "Deployment"
+    ]
+  },
+  {
+    "id": "AML.M0031",
+    "name": "Memory Hardening",
+    "description": "Memory Hardening involves developing trust boundaries and secure processes for how an AI agent stores and accesses memory and context. This may be implemented using a combination of strategies including restricting an agent's ability to store memories by requiring external authentication and validation for memory updates, performing semantic integrity checks on retrieved memories before agents execute actions, and implementing controls for monitoring of memory and remediation processes for poisoned memory.",
+    "technique_ids": [
+      "AML.T0080",
+      "AML.T0080.000"
+    ],
+    "category": [
+      "Technical - ML"
+    ],
+    "ml_lifecycle": [
+      "ML Model Engineering",
+      "Deployment",
+      "Monitoring and Maintenance"
+    ]
+  },
+  {
+    "id": "AML.M0032",
+    "name": "Segmentation of AI Agent Components",
+    "description": "Define security boundaries around agentic tools and data sources with methods such as API access, container isolation, code execution sandboxing, and rate limiting of tool invocation. When sandboxing, limit resource and network access and build the container or virtual machine from a clean base image before each run. This restricts untrusted processes or potential compromises from spreading throughout the system.",
+    "technique_ids": [
+      "AML.T0053",
+      "AML.T0086",
+      "AML.T0098",
+      "AML.T0085",
+      "AML.T0085.000",
+      "AML.T0085.001"
+    ],
+    "category": [
+      "Technical - Cyber"
+    ],
+    "ml_lifecycle": [
+      "Deployment",
+      "Business and Data Understanding"
+    ]
+  },
+  {
+    "id": "AML.M0033",
+    "name": "Input and Output Validation for AI Agent Components",
+    "description": "Implement validation on inputs and outputs for the tools and data sources used by AI agents. Validation includes enforcing a common data format, schema validation, checks for sensitive or prohibited information leakage, and data sanitization to remove potential injections or unsafe code. Input and output validation can help prevent compromises from spreading in AI-enabled systems and can help secure the workflow when multiple components are chained together. Validation should be performed external to the AI agent.",
+    "technique_ids": [
+      "AML.T0053",
+      "AML.T0086",
+      "AML.T0051",
+      "AML.T0051.000",
+      "AML.T0051.001",
+      "AML.T0051.002"
+    ],
+    "category": [
+      "Technical - ML"
+    ],
+    "ml_lifecycle": [
+      "Business and Data Understanding",
+      "Data Preparation",
+      "Deployment"
+    ]
+  },
+  {
+    "id": "AML.M0034",
+    "name": "Deepfake Detection",
+    "description": "Apply deepfake detection algorithms against any untrusted or user-provided data, especially in impactful applications such as biometric verification, to block generated content.\n\nDetectors may use a combination of approaches, including:\n-\tAI models trained to differentiate between real and deepfake content.\n-\tIdentifying common inconsistencies in deepfake content, such as unnatural facial movements, audio mismatches, or pixel-level artifacts.\n-\tBiometrics analysis, such blinking, eye movements, and microexpressions.",
+    "technique_ids": [
+      "AML.T0088",
+      "AML.T0052",
+      "AML.T0052.000",
+      "AML.T0015"
+    ],
+    "category": [
+      "Technical - ML"
+    ],
+    "ml_lifecycle": [
+      "Deployment",
+      "Monitoring and Maintenance",
+      "ML Model Evaluation",
+      "ML Model Engineering"
+    ]
+  }
+]

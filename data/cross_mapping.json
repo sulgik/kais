@@ -1,0 +1,101 @@
+[
+  {
+    "owasp_id": "LLM01",
+    "atlas_technique_ids": [
+      "AML.T0051", "AML.T0051.000", "AML.T0051.001", "AML.T0051.002",
+      "AML.T0054", "AML.T0056", "AML.T0057"
+    ],
+    "nist_categories": ["GOVERN.1", "MAP.4", "MEASURE.2", "MANAGE.2"],
+    "notes_en": "Prompt Injection maps directly to ATLAS LLM Prompt Injection (AML.T0051). Indirect injection is AML.T0051.001; virtual prompt injection is AML.T0051.002. NIST GOVERN.1 requires policies that define acceptable prompting boundaries.",
+    "notes_ko": "프롬프트 인젝션은 ATLAS의 LLM 프롬프트 인젝션(AML.T0051)과 직접 대응. 간접 인젝션은 AML.T0051.001, 가상 프롬프트 인젝션은 AML.T0051.002. NIST GOVERN.1은 프롬프트 경계를 정의하는 정책 수립을 요구함."
+  },
+  {
+    "owasp_id": "LLM02",
+    "atlas_technique_ids": [
+      "AML.T0037", "AML.T0024", "AML.T0024.000", "AML.T0025",
+      "AML.T0035", "AML.T0056"
+    ],
+    "nist_categories": ["MAP.3", "MAP.4", "MEASURE.2", "MANAGE.2"],
+    "notes_en": "Sensitive Information Disclosure relates to training data extraction (AML.T0024/T0025), model inversion (AML.T0037), and data collection techniques. NIST MAP.3 requires understanding what sensitive data the AI system processes.",
+    "notes_ko": "민감 정보 노출은 학습 데이터 추출(AML.T0024/T0025), 모델 역전(AML.T0037), 데이터 수집 기법과 연관. NIST MAP.3은 AI 시스템이 처리하는 민감 데이터를 파악하도록 요구함."
+  },
+  {
+    "owasp_id": "LLM03",
+    "atlas_technique_ids": [
+      "AML.T0010", "AML.T0010.000", "AML.T0010.001", "AML.T0010.002",
+      "AML.T0019", "AML.T0020"
+    ],
+    "nist_categories": ["GOVERN.6", "MAP.1", "MAP.3", "MANAGE.1"],
+    "notes_en": "Supply Chain vulnerabilities map to ATLAS third-party ML component compromise (AML.T0010) and ML supply chain corruption (AML.T0019/T0020). NIST GOVERN.6 mandates policies for third-party AI providers.",
+    "notes_ko": "공급망 취약점은 ATLAS 제3자 ML 컴포넌트 침해(AML.T0010) 및 ML 공급망 훼손(AML.T0019/T0020)과 대응. NIST GOVERN.6은 제3자 AI 공급자에 대한 정책 수립을 요구함."
+  },
+  {
+    "owasp_id": "LLM04",
+    "atlas_technique_ids": [
+      "AML.T0020", "AML.T0018", "AML.T0019",
+      "AML.T0048", "AML.T0048.000", "AML.T0048.001", "AML.T0048.002"
+    ],
+    "nist_categories": ["MAP.4", "MEASURE.2", "MEASURE.3", "MANAGE.2"],
+    "notes_en": "Data and Model Poisoning maps to training data poisoning (AML.T0020), backdoor ML model insertion (AML.T0018), and external harm techniques (AML.T0048). NIST MEASURE.2 requires ongoing evaluation of model behavior for integrity drift.",
+    "notes_ko": "데이터·모델 오염은 학습 데이터 오염(AML.T0020), 백도어 ML 모델 삽입(AML.T0018), 외부적 피해(AML.T0048)와 대응. NIST MEASURE.2는 무결성 이탈에 대한 지속적 모델 행동 평가를 요구함."
+  },
+  {
+    "owasp_id": "LLM05",
+    "atlas_technique_ids": [
+      "AML.T0048", "AML.T0051", "AML.T0057", "AML.T0056",
+      "AML.T0043"
+    ],
+    "nist_categories": ["MAP.4", "MEASURE.2", "MANAGE.2"],
+    "notes_en": "Improper Output Handling relates to adversarial data crafting (AML.T0043), LLM data leakage (AML.T0057), and output manipulation. NIST MAP.4 requires identifying risks that arise from how outputs are consumed downstream.",
+    "notes_ko": "부적절한 출력 처리는 적대적 데이터 생성(AML.T0043), LLM 데이터 유출(AML.T0057), 출력 조작 기법과 연관. NIST MAP.4는 다운스트림 출력 소비로 인한 위험 식별을 요구함."
+  },
+  {
+    "owasp_id": "LLM06",
+    "atlas_technique_ids": [
+      "AML.T0051", "AML.T0054", "AML.T0055", "AML.T0056", "AML.T0057"
+    ],
+    "nist_categories": ["GOVERN.1", "GOVERN.5", "MAP.3", "MANAGE.2"],
+    "notes_en": "Excessive Agency maps directly to ATLAS agentic AI techniques (AML.T0054 LLM Jailbreak, AML.T0055 Unsecured Credentials). NIST GOVERN.1 and GOVERN.5 require explicit policies on AI autonomy and human oversight boundaries.",
+    "notes_ko": "과도한 권한 위임은 ATLAS 에이전틱 AI 기법(AML.T0054 LLM 탈옥, AML.T0055 보안되지 않은 자격증명)과 직접 대응. NIST GOVERN.1/5는 AI 자율성과 인간 감독 경계에 대한 명시적 정책을 요구함."
+  },
+  {
+    "owasp_id": "LLM07",
+    "atlas_technique_ids": [
+      "AML.T0051", "AML.T0051.000", "AML.T0056",
+      "AML.T0040", "AML.T0049"
+    ],
+    "nist_categories": ["MAP.3", "MAP.4", "MEASURE.2", "MANAGE.2"],
+    "notes_en": "System Prompt Leakage maps to direct prompt injection (AML.T0051.000) and LLM system prompt extraction (AML.T0056). NIST MAP.3 requires understanding what sensitive operational instructions the AI system holds.",
+    "notes_ko": "시스템 프롬프트 유출은 직접 프롬프트 인젝션(AML.T0051.000)과 LLM 시스템 프롬프트 추출(AML.T0056)과 대응. NIST MAP.3은 AI 시스템이 보유한 민감한 운영 지침 파악을 요구함."
+  },
+  {
+    "owasp_id": "LLM08",
+    "atlas_technique_ids": [
+      "AML.T0020", "AML.T0024", "AML.T0025",
+      "AML.T0048", "AML.T0058"
+    ],
+    "nist_categories": ["MAP.3", "MAP.4", "MEASURE.2", "MANAGE.2"],
+    "notes_en": "Vector and Embedding Weaknesses map to training data poisoning (AML.T0020), data exfiltration (AML.T0024/T0025), and RAG poisoning (AML.T0058). NIST MAP.4 requires identifying risks specific to retrieval-augmented architectures.",
+    "notes_ko": "벡터·임베딩 취약점은 학습 데이터 오염(AML.T0020), 데이터 추출(AML.T0024/T0025), RAG 오염(AML.T0058)과 연관. NIST MAP.4는 검색 증강 아키텍처에 특화된 위험 식별을 요구함."
+  },
+  {
+    "owasp_id": "LLM09",
+    "atlas_technique_ids": [
+      "AML.T0048.002", "AML.T0056", "AML.T0043",
+      "AML.T0046"
+    ],
+    "nist_categories": ["MAP.4", "MAP.5", "MEASURE.2", "MANAGE.2"],
+    "notes_en": "Misinformation maps to ATLAS hallucinated entity publishing (AML.T0060), adversarial data crafting (AML.T0043), and influence operations (AML.T0046). NIST MAP.5 requires understanding societal and downstream impacts of false AI outputs.",
+    "notes_ko": "허위 정보 생성은 환각 엔티티 배포(AML.T0060), 적대적 데이터 생성(AML.T0043), 영향력 작전(AML.T0046)과 연관. NIST MAP.5는 허위 AI 출력의 사회적·하위 시스템 영향 이해를 요구함."
+  },
+  {
+    "owasp_id": "LLM10",
+    "atlas_technique_ids": [
+      "AML.T0016", "AML.T0029", "AML.T0034",
+      "AML.T0040"
+    ],
+    "nist_categories": ["MAP.4", "MEASURE.2", "MEASURE.3", "MANAGE.1", "MANAGE.2"],
+    "notes_en": "Unbounded Consumption maps to AI denial of service (AML.T0029), cost harvesting (AML.T0034), and capability acquisition (AML.T0016). NIST MANAGE.1 requires prioritizing resource exhaustion as a high-impact AI risk category.",
+    "notes_ko": "무제한 리소스 소비는 AI 서비스 거부(AML.T0029), 비용 착취(AML.T0034), 능력 획득(AML.T0016)과 연관. NIST MANAGE.1은 리소스 고갈을 고영향 AI 위험 범주로 우선순위화하도록 요구함."
+  }
+]

@@ -1,6 +1,7 @@
 """
-NIS AI보안 가이드북 Knowledge Graph Query Engine
+K-AISecMap Knowledge Graph Query Engine
 Loads structured JSON data and provides multi-dimensional queries.
+Integrates: NIS AI보안 가이드북, MITRE ATLAS, OWASP LLM Top 10, NIST AI RMF
 """
 import json
 from pathlib import Path
@@ -8,42 +9,67 @@ from pathlib import Path
 DATA_DIR = Path(__file__).parent / "data"
 
 
+def _safe_load(path: Path) -> list | dict:
+    if path.exists():
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+
 class SecurityKnowledgeGraph:
     def __init__(self, data_dir: Path = DATA_DIR):
-        self.threats = self._load(data_dir / "threats.json")
-        self.measures = self._load(data_dir / "measures.json")
-        self.links = self._load(data_dir / "threat_measure_links.json")
-        self.build_types = self._load(data_dir / "build_type_focuses.json")
-        incidents_path = data_dir / "incidents.json"
-        self.incidents = self._load(incidents_path) if incidents_path.exists() else []
+        # ── NIS (한국 특화) ───────────────────────────────────
+        self.threats = _safe_load(data_dir / "threats.json") or []
+        self.measures = _safe_load(data_dir / "measures.json") or []
+        self.links = _safe_load(data_dir / "threat_measure_links.json") or []
+        self.build_types = _safe_load(data_dir / "build_type_focuses.json") or []
+        self.incidents = _safe_load(data_dir / "incidents.json") or []
 
-        # OWASP LLM Top 10
-        owasp_path = data_dir / "owasp_llm.json"
-        self.owasp = self._load(owasp_path) if owasp_path.exists() else []
-        owasp_map_path = data_dir / "owasp_nis_mapping.json"
-        self._owasp_mapping = self._load(owasp_map_path) if owasp_map_path.exists() else []
+        # ── OWASP LLM Top 10 ─────────────────────────────────
+        self.owasp = _safe_load(data_dir / "owasp_llm.json") or []
+        self._owasp_mapping = _safe_load(data_dir / "owasp_nis_mapping.json") or []
         self._owasp_by_id = {o["id"]: o for o in self.owasp}
         self._owasp_map_by_id = {m["owasp_id"]: m for m in self._owasp_mapping}
 
-        # MITRE ATLAS
-        atlas_path = data_dir / "atlas_data.json"
-        self._atlas_raw = self._load_json(atlas_path) if atlas_path.exists() else {}
-        self.atlas_tactics = self._atlas_raw.get("tactics", [])
-        self.atlas_techniques = self._atlas_raw.get("techniques", [])
-        self.atlas_mitigations = self._atlas_raw.get("mitigations", [])
-        self.atlas_case_studies = self._atlas_raw.get("case_studies", [])
+        # ── MITRE ATLAS (individual files from aisecmap) ──────
+        self.atlas_tactics = _safe_load(data_dir / "atlas_tactics.json") or []
+        self.atlas_techniques = _safe_load(data_dir / "atlas_techniques.json") or []
+        self.atlas_mitigations = _safe_load(data_dir / "atlas_mitigations.json") or []
+        self.atlas_case_studies = _safe_load(data_dir / "atlas_case_studies.json") or []
+        self._atlas_ko = _safe_load(data_dir / "atlas_ko.json") or {}
         self._atlas_tactic_by_id = {t["id"]: t for t in self.atlas_tactics}
         self._atlas_tech_by_id = {t["id"]: t for t in self.atlas_techniques}
-        atlas_map_path = data_dir / "atlas_nis_mapping.json"
-        self._atlas_mapping = self._load(atlas_map_path) if atlas_map_path.exists() else []
+        self._atlas_mit_by_id = {m["id"]: m for m in self.atlas_mitigations}
+
+        # ATLAS → NIS mapping
+        self._atlas_mapping = _safe_load(data_dir / "atlas_nis_mapping.json") or []
         self._atlas_map_by_id = {m["atlas_id"]: m for m in self._atlas_mapping}
-        # Reverse index: NIS threat -> ATLAS techniques
         self._atlas_for_threat = {}
         for am in self._atlas_mapping:
             for tid in am.get("threat_ids", []):
                 self._atlas_for_threat.setdefault(tid, []).append(am["atlas_id"])
 
-        # Index for fast lookup
+        # ATLAS technique → mitigations (from mitigation.technique_ids)
+        self._mits_for_technique = {}
+        for m in self.atlas_mitigations:
+            for tid in m.get("technique_ids", []):
+                self._mits_for_technique.setdefault(tid, []).append(m["id"])
+
+        # ATLAS technique → case studies
+        self._cs_for_technique = {}
+        for cs in self.atlas_case_studies:
+            for tid in cs.get("technique_ids", []):
+                self._cs_for_technique.setdefault(tid, []).append(cs["id"])
+
+        # ── Cross-framework mapping (OWASP → ATLAS → NIST) ───
+        self._cross_mapping = _safe_load(data_dir / "cross_mapping.json") or []
+        self._xmap_by_owasp = {x["owasp_id"]: x for x in self._cross_mapping}
+
+        # ── NIST AI RMF ──────────────────────────────────────
+        self.nist = _safe_load(data_dir / "nist_ai_rmf.json") or []
+        self._nist_by_id = {f["id"]: f for f in self.nist}
+
+        # ── NIS indexes ──────────────────────────────────────
         self._threat_by_id = {t["id"]: t for t in self.threats}
         self._measure_by_id = {m["id"]: m for m in self.measures}
         self._measures_for_threat = {}
@@ -52,16 +78,16 @@ class SecurityKnowledgeGraph:
             self._measures_for_threat.setdefault(link["threat_id"], []).append(link["measure_id"])
             self._threats_for_measure.setdefault(link["measure_id"], []).append(link["threat_id"])
 
-        # NIS Incidents index: incident -> threats
+        # NIS Incidents
         self._incident_by_id = {i["id"]: i for i in self.incidents}
         self._incidents_for_threat = {}
         for inc in self.incidents:
             for tid in inc.get("threat_ids", []):
                 self._incidents_for_threat.setdefault(tid, []).append(inc["id"])
 
-        # ATLAS Case Studies index: case_study -> NIS threats (via technique -> mapping)
+        # ATLAS Case Studies → NIS threats (via technique → atlas_nis_mapping)
         self._case_study_by_id = {cs["id"]: cs for cs in self.atlas_case_studies}
-        self._case_study_threats = {}  # cs_id -> [threat_ids]
+        self._case_study_threats = {}
         for cs in self.atlas_case_studies:
             threat_ids = set()
             for tech_id in cs.get("technique_ids", []):
@@ -69,14 +95,6 @@ class SecurityKnowledgeGraph:
                 for tid in mapping.get("threat_ids", []):
                     threat_ids.add(tid)
             self._case_study_threats[cs["id"]] = sorted(threat_ids)
-
-    def _load(self, path: Path) -> list[dict]:
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
-
-    def _load_json(self, path: Path) -> dict:
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
 
     # === Query by threat ===
     def get_threat(self, threat_id: str) -> dict | None:
@@ -224,10 +242,51 @@ class SecurityKnowledgeGraph:
         kw = keyword.lower()
         results = []
         for t in self.atlas_techniques:
-            searchable = " ".join([t["name"], t["name_ko"], t.get("description", "")]).lower()
+            ko = self._atlas_ko.get("techniques", {}).get(t["id"], {})
+            searchable = " ".join([t["name"], ko.get("name", ""), t.get("description", "")]).lower()
             if kw in searchable:
                 results.append(t)
         return results
+
+    # === ATLAS mitigation queries ===
+    def get_atlas_mitigation(self, mid: str) -> dict | None:
+        return self._atlas_mit_by_id.get(mid)
+
+    def get_mitigations_for_technique(self, tech_id: str) -> list[dict]:
+        mids = self._mits_for_technique.get(tech_id, [])
+        return [self._atlas_mit_by_id[m] for m in mids if m in self._atlas_mit_by_id]
+
+    def get_case_studies_for_technique(self, tech_id: str) -> list[dict]:
+        csids = self._cs_for_technique.get(tech_id, [])
+        return [self._case_study_by_id[c] for c in csids if c in self._case_study_by_id]
+
+    # === NIST AI RMF queries ===
+    def get_nist(self, nist_id: str) -> dict | None:
+        return self._nist_by_id.get(nist_id)
+
+    def get_nist_for_owasp(self, owasp_id: str) -> list[dict]:
+        xmap = self._xmap_by_owasp.get(owasp_id, {})
+        return [self._nist_by_id[nid] for nid in xmap.get("nist_categories", [])
+                if nid in self._nist_by_id]
+
+    def get_atlas_for_owasp(self, owasp_id: str) -> list[dict]:
+        """Get ATLAS techniques mapped to an OWASP item (via cross_mapping)."""
+        xmap = self._xmap_by_owasp.get(owasp_id, {})
+        return [self._atlas_tech_by_id[tid] for tid in xmap.get("atlas_technique_ids", [])
+                if tid in self._atlas_tech_by_id]
+
+    # === Korean name helpers ===
+    def atlas_name_ko(self, atlas_id: str) -> str:
+        """Get Korean name for any ATLAS ID (technique, tactic, mitigation, case study)."""
+        for category in ["techniques", "tactics", "mitigations"]:
+            entry = self._atlas_ko.get(category, {}).get(atlas_id, {})
+            if entry:
+                return entry.get("name", atlas_id)
+        # Case studies — use English name (no Korean in atlas_ko)
+        cs = self._case_study_by_id.get(atlas_id)
+        if cs:
+            return cs["name"]
+        return atlas_id
 
     def get_cross_framework(self, item_id: str) -> dict:
         """Unified cross-framework lookup by any ID (T##, LLM##, AML.T####)."""
@@ -315,7 +374,10 @@ class SecurityKnowledgeGraph:
         if show_case_studies:
             for cs in self.atlas_case_studies:
                 if self._case_study_threats.get(cs["id"]):  # only if linked to NIS threats
-                    _add_node(cs["id"], f"{cs['id'][:6]}..\n{cs['name_ko'][:10]}", "#9b59b6", "triangle", 18, "ATLAS 사례연구", cs["name_ko"])
+                    ko = self._atlas_ko.get("case_studies", {}).get(cs["id"], {})
+                    label = ko.get("name", cs["name"])[:12]
+                    title = ko.get("name", cs["name"])
+                    _add_node(cs["id"], f"{cs['id'][:8]}\n{label}", "#9b59b6", "triangle", 18, "ATLAS 사례연구", title)
 
         # --- Edges ---
         # NIS Threat <-> NIS Measure
@@ -371,7 +433,11 @@ class SecurityKnowledgeGraph:
             "agentic_measures": len(self.get_measures_by_ai_type("에이전틱 AI")),
             "physical_measures": len(self.get_measures_by_ai_type("피지컬 AI")),
             "atlas_techniques": len(self.atlas_techniques),
+            "atlas_mitigations": len(self.atlas_mitigations),
+            "atlas_case_studies": len(self.atlas_case_studies),
             "atlas_mappings": len(self._atlas_mapping),
+            "nist_functions": len(self.nist),
+            "cross_mappings": len(self._cross_mapping),
         }
 
 
